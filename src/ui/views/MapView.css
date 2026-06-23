@@ -1,0 +1,200 @@
+/* Map ビューのスタイル（Task 19.1 / Req 2）。
+   モバイルファースト。地図サーフェスは正方形に近い領域を占有し、マーカーは絶対配置する。
+   解放済みとロックは視覚的に明確に区別する（Req 2.3）。タッチターゲットは最小44×44px（Req 12.5）。 */
+
+.map-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 既定座標表示時の注意書き（Req 2.6） */
+.map-view__notice {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--color-surface, #f5f7fa);
+  color: var(--color-muted, #5a6472);
+  font-size: 0.8rem;
+}
+
+/* 読み込み中／失敗のステータス表示（Req 2.1, 2.7） */
+.map-view__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 40vh;
+  text-align: center;
+  color: var(--color-muted, #5a6472);
+}
+
+.map-view__status-text {
+  margin: 0;
+}
+
+.map-view__status--error .map-view__status-text {
+  color: var(--color-danger, #c62828);
+}
+
+.map-view__spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--color-border, #e0e4ea);
+  border-top-color: var(--color-primary, #1565c0);
+  border-radius: 50%;
+  animation: map-spin 0.9s linear infinite;
+}
+
+@keyframes map-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.map-view__retry {
+  /* 再試行ボタンの最小タッチターゲット（Req 12.5） */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1.5rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--color-primary, #1565c0);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* 地図描画面（アプリ内サーフェス）。マーカーを絶対配置する基準ボックス。 */
+.map-surface {
+  position: relative;
+  width: 100%;
+  /* 正方形に近い表示領域を確保 */
+  aspect-ratio: 1 / 1;
+  max-height: 60vh;
+  overflow: hidden;
+  border: 1px solid var(--color-border, #e0e4ea);
+  border-radius: 12px;
+  /* 地図らしい淡いグリッド背景（簡易表現） */
+  background-color: #e8f0e8;
+  background-image:
+    linear-gradient(rgba(21, 101, 192, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 101, 192, 0.08) 1px, transparent 1px);
+  background-size: 10% 10%;
+}
+
+/* 現在位置マーカー（中心） */
+.map-surface__player {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--color-primary, #1565c0);
+  box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.25);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* スポットマーカー（ボタン）。最小タッチターゲットを確保（Req 12.5） */
+.map-surface__marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 3;
+}
+
+/* 解放済みマーカー: 通常表示（くっきり） */
+.map-surface__marker--unlocked {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* ロックマーカー: 解放済みと視覚的に明確に区別する（くすませる）（Req 2.3） */
+.map-surface__marker--locked {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+/* 選択中マーカーの強調 */
+.map-surface__marker--selected {
+  z-index: 4;
+}
+
+.map-surface__marker--selected::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 2px solid var(--color-primary, #1565c0);
+  border-radius: 50%;
+}
+
+/* スポット詳細パネル（Req 2.4, 2.5） */
+.map-detail {
+  position: relative;
+  padding: 1rem 2.25rem 1rem 1rem;
+  border: 1px solid var(--color-border, #e0e4ea);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.map-detail__close {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--color-muted, #5a6472);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-detail__name {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.map-detail__description {
+  margin: 0 0 0.5rem;
+  color: var(--color-text, #1a1a1a);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.map-detail__visit {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted, #5a6472);
+}
+
+.map-detail__visit--visited {
+  color: #2e7d32;
+}
+
+.map-detail--locked .map-detail__locked-text {
+  margin: 0;
+  color: var(--color-muted, #5a6472);
+  font-size: 0.9rem;
+}

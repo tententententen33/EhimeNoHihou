@@ -1,0 +1,103 @@
+/* App レベルの結線で追加した要素のスタイル（Task 20.1）。
+   レイアウト本体・タッチターゲット（44x44px 以上）は AppLayout.css 側で担保する。 */
+
+.app-map-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+/* 通知バナー（地域アンロック・位置メッセージ） */
+.app-banner {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.app-banner--region {
+  background: #e6f7ed;
+  color: #1b6b3a;
+  border: 1px solid #9fd9b6;
+}
+
+.app-banner--warning {
+  background: #fdeded;
+  color: #9b2c2c;
+  border: 1px solid #f2b8b5;
+}
+
+/* 操作エリア（現在地を確認） */
+.app-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.app-actions__primary {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: #1f7a4d;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.app-actions__primary:active {
+  background: #195f3c;
+}
+
+/* 開発ツール（デモ操作） */
+.app-devtools {
+  border: 1px dashed #c9c9c9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fafafa;
+}
+
+.app-devtools > summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.app-devtools__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.app-devtools__label {
+  width: 100%;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.app-devtools__group button {
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: 1px solid #1f7a4d;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f7a4d;
+  cursor: pointer;
+}
+
+.app-devtools__group button:active {
+  background: #eef7f1;
+}
+
+.app-devtools__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #888;
+}

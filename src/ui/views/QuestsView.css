@@ -1,0 +1,130 @@
+/* Quests ビューのスタイル（モバイルファースト, Req 4.7） */
+
+.quests-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quests-view__heading {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.quests-view__empty {
+  margin: 0;
+  padding: 1rem;
+  color: #666;
+  text-align: center;
+}
+
+.quests-view__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* 個々のクエストカード */
+.quest-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #fff;
+}
+
+/* 完了したクエストは強調表示する */
+.quest-card--complete {
+  border-color: var(--color-primary, #1565c0);
+  background: #f3f8ff;
+}
+
+.quest-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.quest-card__title {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+/* 完了バッジ */
+.quest-card__badge {
+  flex: none;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-primary, #1565c0);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.quest-card__counts {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.quest-card__counts-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.quest-card__counts-label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* 進捗インジケータ */
+.quest-card__progress {
+  margin-top: 0.5rem;
+  height: 8px;
+  border-radius: 999px;
+  background: #e8e8e8;
+  overflow: hidden;
+}
+
+.quest-card__progress-fill {
+  height: 100%;
+  background: var(--color-primary, #1565c0);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+/* 残り未達条件 */
+.quest-card__remaining {
+  margin-top: 0.5rem;
+}
+
+.quest-card__remaining-summary {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.quest-card__remaining--done {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-primary, #1565c0);
+  font-weight: 600;
+}
+
+.quest-card__remaining-list {
+  list-style: disc;
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.quest-card__remaining-item {
+  font-size: 0.85rem;
+  word-break: break-word;
+}

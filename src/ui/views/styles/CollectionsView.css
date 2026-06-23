@@ -1,0 +1,132 @@
+/* CollectionsView のスタイル（Task 19.5 / Req 3.5, 11.6）。
+   モバイルファースト。進捗バー付きのカード表示で、スタンプ集計・コレクション・称号を縦に並べる。
+   横スクロールを発生させず（Req 12.4）、タッチ操作を阻害しないシンプルな表示とする。 */
+
+.collections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 100%;
+}
+
+.collections-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.collections-section__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* 一覧（コレクション・称号）の共通リセット */
+.collections-list,
+.collections-titles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* スタンプ／各コレクションのカード */
+.collections-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border, #e0e4ea);
+  border-radius: var(--app-radius, 12px);
+  background: var(--color-surface, #f5f7fa);
+  max-width: 100%;
+}
+
+.collections-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.collections-card__name {
+  font-weight: 600;
+  /* 長い名称でも横幅を超えないよう省略する（Req 12.4） */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collections-card__count {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted, #5a6472);
+  font-size: 0.9rem;
+}
+
+/* 進捗バー */
+.collections-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-border, #e0e4ea);
+  overflow: hidden;
+}
+
+.collections-bar__fill {
+  height: 100%;
+  background: var(--color-primary, #1565c0);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+/* 完了／未完了の状態表示 */
+.collections-status {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #eceff3;
+  color: var(--color-muted, #5a6472);
+}
+
+.collections-status--complete {
+  background: #e6f4ea;
+  color: #1b7a3d;
+}
+
+/* 称号 */
+.collections-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--color-border, #e0e4ea);
+  border-radius: var(--app-radius, 12px);
+  background: var(--color-surface, #f5f7fa);
+}
+
+.collections-title__name {
+  font-weight: 700;
+}
+
+.collections-title__desc {
+  font-size: 0.8rem;
+  color: var(--color-muted, #5a6472);
+}
+
+/* 空状態の表示 */
+.collections-empty {
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px dashed var(--color-border, #e0e4ea);
+  border-radius: var(--app-radius, 12px);
+  color: var(--color-muted, #5a6472);
+  font-size: 0.9rem;
+  text-align: center;
+}

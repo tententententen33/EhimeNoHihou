@@ -1,0 +1,129 @@
+/* Shop ビューのスタイル（Task 19.3 / Req 7）。 */
+/* モバイルファースト。横スクロールを避け、タッチターゲットは最小 44px を確保する（Req 12.4, 12.5）。 */
+
+.shop-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.shop-view__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.shop-view__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.shop-view__balance {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.shop-view__balance-value {
+  margin-left: 0.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* 購入結果メッセージ（残高不足・購入確定・保存不可） */
+.shop-view__message {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.shop-view__message--success {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.shop-view__message--warning {
+  background: #fff4e5;
+  color: #8a5300;
+}
+
+.shop-view__message--error {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.shop-view__empty {
+  margin: 0;
+  padding: 1rem 0;
+  color: #666;
+  text-align: center;
+}
+
+.shop-view__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: var(--color-bg);
+}
+
+.shop-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  /* 長い効果説明でも横幅を超えないよう縮小を許可する（Req 12.4） */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.shop-item__name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.shop-item__price {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+}
+
+.shop-item__description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #444;
+  line-height: 1.4;
+  /* 280文字までの説明を折り返して表示する（Req 7.1） */
+  overflow-wrap: anywhere;
+}
+
+.shop-item__buy {
+  flex: 0 0 auto;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-item__buy:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

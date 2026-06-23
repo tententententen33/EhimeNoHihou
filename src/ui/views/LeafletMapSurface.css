@@ -1,0 +1,68 @@
+/* Leaflet 実地図サーフェスのスタイル（LeafletMapSurface.tsx 用）。
+   モバイルファースト。地図は十分な高さを確保し、ドラッグ・ズームできる実地図として機能させる。 */
+
+/* 地図コンテナ。高さを明示しないと Leaflet は描画されないため固定高を与える。 */
+.leaflet-surface {
+  width: 100%;
+  height: 60vh;
+  min-height: 320px;
+  border: 1px solid var(--color-border, #e0e4ea);
+  border-radius: 12px;
+  /* 角丸からタイルがはみ出さないようにする */
+  overflow: hidden;
+  /* タッチ操作（パン/ズーム）を地図に渡す */
+  touch-action: none;
+  z-index: 0;
+}
+
+/* スポットマーカー（divIcon の中身）。 */
+.leaflet-spot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  /* アイコンの中心を座標に合わせるため transform は iconAnchor 側で調整済み */
+  transform: translateY(-2px);
+}
+
+.leaflet-spot__pin {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+/* 解放済みスポットの名前ラベル。 */
+.leaflet-spot__label {
+  margin-top: 1px;
+  padding: 1px 6px;
+  max-width: 120px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1a1a1a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* ロックスポット: くすませて解放済みと明確に区別する（名前は表示しない）。 */
+.leaflet-spot--locked .leaflet-spot__pin {
+  opacity: 0.7;
+  filter: grayscale(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* 選択中マーカーの強調。 */
+.leaflet-spot--selected .leaflet-spot__pin {
+  transform: scale(1.25);
+}
+
+/* 現在位置マーカー（青い丸）。 */
+.leaflet-player {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--color-primary, #1565c0);
+  box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.3);
+}
