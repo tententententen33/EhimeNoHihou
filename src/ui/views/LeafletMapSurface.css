@@ -1,13 +1,15 @@
 /* Leaflet 実地図サーフェスのスタイル（LeafletMapSurface.tsx 用）。
    モバイルファースト。地図は十分な高さを確保し、ドラッグ・ズームできる実地図として機能させる。 */
 
-/* 地図コンテナ。高さを明示しないと Leaflet は描画されないため固定高を与える。 */
+/* 地図コンテナ。親（全面マップ領域）を埋め尽くす。 */
 .leaflet-surface {
   width: 100%;
-  height: 60vh;
-  min-height: 320px;
-  border: 1px solid var(--color-border, #e0e4ea);
-  border-radius: 12px;
+  /* 親が flex 列で高さを与えるため、残り高さいっぱいに広がる */
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  border: none;
+  border-radius: 0;
   /* 角丸からタイルがはみ出さないようにする */
   overflow: hidden;
   /* タッチ操作（パン/ズーム）を地図に渡す */
@@ -57,12 +59,60 @@
   transform: scale(1.25);
 }
 
-/* 現在位置マーカー（青い丸）。 */
+/* 現在位置マーカー（Google Map 風の青い点滅ドット）。 */
 .leaflet-player {
-  width: 18px;
-  height: 18px;
-  border: 3px solid #fff;
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+
+/* 中心の青い点（白フチ付き）。 */
+.leaflet-player__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--color-primary, #1565c0);
-  box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.3);
+  background: #1a73e8;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+/* 拡散して点滅するリング。 */
+.leaflet-player__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(26, 115, 232, 0.45);
+  z-index: 1;
+  animation: leaflet-player-pulse 1.8s ease-out infinite;
+}
+
+@keyframes leaflet-player-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.7;
+  }
+  70% {
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* アニメーションを抑制する設定を尊重する。 */
+@media (prefers-reduced-motion: reduce) {
+  .leaflet-player__pulse {
+    animation: none;
+    opacity: 0.4;
+  }
 }

@@ -37,7 +37,7 @@ import {
   type SessionStore,
   type StoreNotification,
 } from './state/store';
-import type { PlayerState } from './domain/types';
+import type { ItemCatalog, PlayerState } from './domain/types';
 import { isAvailable } from './domain/boss';
 import './ui/styles/App.css';
 
@@ -48,9 +48,9 @@ import {
   SPOTS,
   TITLES,
   TOTAL_SPOTS,
-  createSampleContext,
-  createSampleInitialState,
-} from './data/sampleContent';
+  createGameContext,
+  createGameInitialState,
+} from './data/gameContent';
 
 // ローカル開発用の固定プレイヤー id（実運用では認証から取得する）。
 const PLAYER_ID = 'local-player';
@@ -100,12 +100,16 @@ export function App() {
   const [player, setPlayer] = useState<PlayerState | null>(null);
   // 現在位置（精度 50m 以内が取れている場合）。無ければ null（Req 2.6）。
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
+  // 現在位置の水平精度（メートル）。精度円表示に用いる。
+  const [positionAccuracy, setPositionAccuracy] = useState<number | undefined>(undefined);
   // 位置取得に関するメッセージ（権限拒否 Req 1.6 / タイムアウト Req 1.7 など）。
   const [locationMessage, setLocationMessage] = useState<string | null>(null);
   // レベルアップ通知（Req 6.3）。CharacterView へ渡す。
   const [levelUp, setLevelUp] = useState<{ newLevel: number } | null>(null);
   // 地域アンロックの一時バナー（Req 10.6）。
   const [regionBanner, setRegionBanner] = useState<string | null>(null);
+  // 画面上部に出すトースト通知（レベルアップ・ドロップなど）。
+  const [toast, setToast] = useState<string | null>(null);
 
   // 副作用を持つインフラは生成を 1 回に固定する（再レンダーで作り直さない）。
   const dataStoreRef = useRef<UserDataStore | null>(null);
@@ -117,20 +121,30 @@ export function App() {
     locationServiceRef.current = new LocationService();
   }
   // 静的コンテキスト（カタログ群）は不変なのでメモ化する。
-  const context = useMemo(() => createSampleContext(), []);
+  const context = useMemo(() => createGameContext(), []);
 
   // 構築済みの SessionStore（読み込み成功後に生成）。
   const storeRef = useRef<SessionStore | null>(null);
 
-  /** ストア通知（レベルアップ・地域アンロック）を UI 状態へ反映する。 */
+  /** ストア通知（レベルアップ・地域アンロック・ドロップ）を UI 状態へ反映する。 */
   const handleNotification = useCallback((notification: StoreNotification) => {
     if (notification.kind === 'level-up') {
       // レベルアップ通知を CharacterView に表示させる（Req 6.3）。
       setLevelUp({ newLevel: notification.newLevel });
-    } else {
+      // 画面上部にもトーストで知らせる。
+      setToast(`🎉 レベルアップ！ レベル ${notification.newLevel} になりました`);
+      window.setTimeout(() => setToast(null), REGION_BANNER_MS);
+    } else if (notification.kind === 'region-unlocked') {
       // 地域アンロックの一時バナーを表示する（Req 10.6）。
       setRegionBanner(`新しい地域「${notification.regionName}」が解放されました！`);
       window.setTimeout(() => setRegionBanner(null), REGION_BANNER_MS);
+    } else {
+      // アイテムドロップ通知（ボス・中ボス）。アイテム id を名前へ変換して表示。
+      const names = notification.itemIds
+        .map((id) => ITEM_CATALOG[id]?.name ?? id)
+        .join('、');
+      setToast(`⚔️ ${notification.bossName} が「${names}」を落とした！`);
+      window.setTimeout(() => setToast(null), REGION_BANNER_MS);
     }
   }, []);
 
@@ -152,7 +166,7 @@ export function App() {
       if (isNotFound(error)) {
         // 新規プレイヤー: 初期状態を作成し永続化する（保存に失敗したら error 表示）。
         try {
-          const initial = createSampleInitialState(PLAYER_ID);
+          const initial = createGameInitialState(PLAYER_ID);
           await dataStore.persist(PLAYER_ID, initial);
           state = initial;
         } catch {
@@ -217,6 +231,7 @@ export function App() {
 
     setLocationMessage(null);
     setPosition({ lat: result.position.lat, lng: result.position.lng });
+    setPositionAccuracy(result.position.accuracyMeters);
 
     // 入場スポット判定（Req 1.3, 1.4, 1.5）。
     const presence = service.resolvePresence(result.position, SPOTS);
@@ -257,6 +272,16 @@ export function App() {
     setPlayer(store.getState());
   }, []);
 
+  /** 装備解除（外す）。永続化 → 状態反映。 */
+  const handleUnequip = useCallback(async (slot: 'weapon' | 'armor' | 'accessory') => {
+    const store = storeRef.current;
+    if (!store) {
+      return;
+    }
+    await store.unequipItem(slot);
+    setPlayer(store.getState());
+  }, []);
+
   /** 購入（Req 7.2, 7.3, 7.7）。ShopView が期待する PurchaseOutcome 形へ変換して返す。 */
   const handlePurchase = useCallback(async (itemId: string): Promise<PurchaseOutcome> => {
     const store = storeRef.current;
@@ -289,6 +314,28 @@ export function App() {
     };
     const availableBosses = BOSSES.filter((boss) => isAvailable(boss, visited));
 
+    // 市町ボスの解禁判定: その市内の中ボスを全撃破しているか。
+    const defeatedSet = new Set(player.defeatedBossIds);
+    const spotRegionById = new Map(SPOTS.map((s) => [s.id, s.regionId]));
+    const midBossIdsByRegion = new Map<string, string[]>();
+    for (const b of BOSSES) {
+      if (b.kind === 'midBoss' && b.bind.kind === 'spot') {
+        const rid = spotRegionById.get(b.bind.spotId);
+        if (rid !== undefined) {
+          const list = midBossIdsByRegion.get(rid) ?? [];
+          list.push(b.id);
+          midBossIdsByRegion.set(rid, list);
+        }
+      }
+    }
+    const isRegionBossUnlocked = (boss: (typeof BOSSES)[number]): boolean => {
+      if (boss.bind.kind !== 'region') {
+        return true;
+      }
+      const required = midBossIdsByRegion.get(boss.bind.regionId) ?? [];
+      return required.every((id) => defeatedSet.has(id));
+    };
+
     // 解放済みかつ未訪問のスポット（デモ用の入場ボタン対象）。
     const stampedSpotIds = new Set(player.stamps.map((s) => s.spotId));
     const visitableSpots = SPOTS.filter(
@@ -298,6 +345,16 @@ export function App() {
 
     // スポット id → 名前のルックアップ（QuestsView の残り未達条件表示に使用）。
     const spotNameById = new Map(SPOTS.map((s) => [s.id, s.name]));
+
+    // ショップは解放済み地域のアイテムのみ並べる（地域ゲート）。
+    // 地域に紐づかないアイテムは常に表示。限定アイテムは listPurchasable 側で除外される。
+    const unlockedSet = new Set(player.unlockedRegionIds);
+    const shopCatalog: ItemCatalog = {};
+    for (const [id, item] of Object.entries(ITEM_CATALOG)) {
+      if (item.regionId === undefined || unlockedSet.has(item.regionId)) {
+        shopCatalog[id] = item;
+      }
+    }
 
     // Map ビューは「現在地確認 + 開発用操作 + 地図」を合成して提供する。
     const mapNode = (
@@ -348,11 +405,22 @@ export function App() {
             {availableBosses.length === 0 ? (
               <p className="app-devtools__empty">挑戦できるボスはいません。</p>
             ) : (
-              availableBosses.map((boss) => (
-                <button key={boss.id} type="button" onClick={() => void defeatBoss(boss.id)}>
-                  {boss.id} に勝利
-                </button>
-              ))
+              availableBosses.map((boss) => {
+                const locked = boss.kind === 'boss' && !isRegionBossUnlocked(boss);
+                return (
+                  <button
+                    key={boss.id}
+                    type="button"
+                    disabled={locked}
+                    title={locked ? '市内の中ボスを全て倒すと解禁されます' : undefined}
+                    onClick={() => void defeatBoss(boss.id)}
+                  >
+                    {boss.kind === 'midBoss' ? '【中ボス】' : '【ボス】'}
+                    {boss.name ?? boss.id}
+                    {locked ? '（中ボス全撃破で解禁）' : ' に勝利'}
+                  </button>
+                );
+              })
             )}
           </div>
         </details>
@@ -361,6 +429,7 @@ export function App() {
           player={player}
           spots={SPOTS}
           position={position}
+          positionAccuracyMeters={positionAccuracy}
           renderSurface={(surfaceProps) => <LeafletMapSurface {...surfaceProps} />}
         />
       </div>
@@ -373,15 +442,20 @@ export function App() {
           player={player}
           itemCatalog={ITEM_CATALOG}
           onEquip={(itemId) => void handleEquip(itemId)}
+          onUnequip={(slot) => void handleUnequip(slot)}
           levelUp={levelUp}
           onDismissLevelUp={() => setLevelUp(null)}
         />
       ),
       shop: (
-        <ShopView player={player} itemCatalog={ITEM_CATALOG} onPurchase={handlePurchase} />
+        <ShopView player={player} itemCatalog={shopCatalog} onPurchase={handlePurchase} />
       ),
       quests: (
-        <QuestsView player={player} spotName={(id) => spotNameById.get(id)} />
+        <QuestsView
+          player={player}
+          spotName={(id) => spotNameById.get(id)}
+          visibleRegionIds={player.unlockedRegionIds}
+        />
       ),
       collections: (
         <CollectionsView
@@ -395,6 +469,7 @@ export function App() {
   }, [
     player,
     position,
+    positionAccuracy,
     levelUp,
     locationMessage,
     regionBanner,
@@ -403,8 +478,18 @@ export function App() {
     walk,
     defeatBoss,
     handleEquip,
+    handleUnequip,
     handlePurchase,
   ]);
 
-  return <AppLayout loadStatus={loadStatus} onRetry={() => void initialize()} views={views} />;
+  return (
+    <>
+      {toast !== null && (
+        <div className="app-toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
+      <AppLayout loadStatus={loadStatus} onRetry={() => void initialize()} views={views} />
+    </>
+  );
 }

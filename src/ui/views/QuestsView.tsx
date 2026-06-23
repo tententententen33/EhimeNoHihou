@@ -23,11 +23,17 @@ export interface QuestsViewProps {
    * 未指定、または名前が見つからない場合は id をそのまま表示する。
    */
   spotName?: (spotId: string) => string | undefined;
+  /**
+   * 表示対象の地域 id 一覧（任意）。指定された場合、地域に紐づくクエストは
+   * その地域が含まれるときのみ表示する（地域ゲート）。地域に紐づかない
+   * クエストは常に表示する。未指定時はすべて表示する。
+   */
+  visibleRegionIds?: string[];
 }
 
-/** クエスト定義 id から人間可読なラベルを生成する（クエスト名は未定義のため id を表示） */
+/** クエスト定義の表示ラベル（name があれば優先、なければ id）。 */
 function questLabel(quest: QuestProgress): string {
-  return quest.definition.id;
+  return quest.definition.name ?? quest.definition.id;
 }
 
 /** 単一クエストの進行カードを描画する */
@@ -101,8 +107,16 @@ function QuestCard({
  * アクティブクエスト一覧を表示するビュー。
  * クエストが無い場合は空状態を表示する。
  */
-export function QuestsView({ player, spotName }: QuestsViewProps) {
-  const quests = player.quests;
+export function QuestsView({ player, spotName, visibleRegionIds }: QuestsViewProps) {
+  // 地域ゲート: visibleRegionIds 指定時は、地域に紐づくクエストを解放済み地域のみ表示。
+  const visibleSet = visibleRegionIds ? new Set(visibleRegionIds) : null;
+  const quests = player.quests.filter((q) => {
+    const regionId = q.definition.regionId;
+    if (visibleSet === null || regionId === undefined) {
+      return true;
+    }
+    return visibleSet.has(regionId);
+  });
 
   return (
     <section className="quests-view" aria-label="クエスト">

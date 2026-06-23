@@ -391,3 +391,103 @@ export function groupOwnedEquipment(
     };
   });
 }
+
+// ===========================================================================
+// セクション 3: レベル基礎ステータスと合計ステータス
+// ===========================================================================
+//
+// レベルに応じてキャラクターの「基礎ステータス」を導出する。装備のステータス
+// 効果（computeStats）とは別に、レベルそのものから得られる素の強さを表す。
+//
+// 成長方針（バランス調整）:
+// - ステータスごとに伸び方を変える（均一に上げない）。HP は大きく、攻撃は中庸、
+//   防御はやや控えめ、速さは緩やかに伸ばす。
+// - いずれも指数 < 1 の冪乗カーブを用い、序盤は伸びやすく、レベルが上がるほど
+//   伸びが鈍化する（逓減・インフレ抑制）。
+// - レベルは levelForExperience により 1〜99 に有界化されているため、基礎値も有界。
+
+/** ステータスごとの基礎値カーブ係数（base: レベル1の値, coef: 伸び, exp: 逓減指数<1）。 */
+const BASE_STAT_CURVE: Record<keyof CharacterStats, { base: number; coef: number; exp: number }> = {
+  // HP は最も大きく伸びる（被弾に耐える土台）。
+  hp: { base: 50, coef: 20, exp: 0.92 },
+  // 攻撃は中程度の伸び。
+  attack: { base: 10, coef: 6, exp: 0.85 },
+  // 防御はやや控えめ。
+  defense: { base: 8, coef: 4.5, exp: 0.85 },
+  // 速さは最も緩やかに伸びる（伸びすぎるとゲームが壊れやすいため抑制）。
+  speed: { base: 5, coef: 2.5, exp: 0.8 },
+};
+
+/**
+ * レベルから基礎ステータスを導出する（Req 6 関連の成長表現）。
+ *
+ * 各ステータスは `base + round(coef * (level-1)^exp)` で算出する。
+ * 指数 exp < 1 により、レベルが上がるほど 1 レベルあたりの増加量が逓減する
+ * （序盤は伸び、後半はインフレを抑える）。level は 1〜99 にクランプする。
+ *
+ * @param level キャラクターレベル（1〜99 を想定）
+ * @returns レベル基礎ステータス
+ */
+export function baseStatsForLevel(level: number): CharacterStats {
+  const lv = Math.min(Math.max(Math.floor(level), MIN_LEVEL), MAX_LEVEL);
+  const n = lv - 1; // レベル1で 0
+  const calc = (key: keyof CharacterStats): number => {
+    const { base, coef, exp } = BASE_STAT_CURVE[key];
+    return base + Math.round(coef * Math.pow(n, exp));
+  };
+  return {
+    hp: calc('hp'),
+    attack: calc('attack'),
+    defense: calc('defense'),
+    speed: calc('speed'),
+  };
+}
+
+/**
+ * プレイヤーの合計ステータス（レベル基礎 + 装備効果）を返す。
+ *
+ * レベルは経験値から導出し（`levelForExperience`）、その基礎ステータスに
+ * 装備の合算効果（`computeStats`）を加える。UI 表示や戦闘計算の入力に用いる。
+ *
+ * @param state プレイヤー状態
+ * @param items アイテムカタログ
+ * @returns 合計ステータス
+ */
+export function totalStats(state: PlayerState, items: ItemCatalog): CharacterStats {
+  const level = levelForExperience(state.experience);
+  const base = baseStatsForLevel(level);
+  const equip = computeStats(state, items);
+  return {
+    hp: base.hp + equip.hp,
+    attack: base.attack + equip.attack,
+    defense: base.defense + equip.defense,
+    speed: base.speed + equip.speed,
+  };
+}
+
+// ===========================================================================
+// セクション 4: 装備の解除（unequip）
+// ===========================================================================
+
+/**
+ * 指定スロットの装備を解除する（外す）。
+ *
+ * 対象スロットの有効アイテムを null（未装備）にした新しい状態を返す純粋関数。
+ * 既に未装備の場合は状態を変更せず同一参照を返す。入力状態は破壊的に変更しない。
+ *
+ * @param state 現在のプレイヤー状態
+ * @param slot 解除する装備スロット
+ * @returns 当該スロットを未装備にした次状態（元から未装備なら不変）
+ */
+export function unequip(state: PlayerState, slot: EquipmentSlot): PlayerState {
+  if (state.equipped[slot] === null) {
+    return state;
+  }
+  return {
+    ...state,
+    equipped: {
+      ...state.equipped,
+      [slot]: null,
+    },
+  };
+}

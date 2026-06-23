@@ -9,16 +9,24 @@
   gap: 0.75rem;
   width: 100%;
   max-width: 100%;
+  /* 親（全面マップ領域）を埋め尽くす */
+  height: 100%;
 }
 
-/* 既定座標表示時の注意書き（Req 2.6） */
+/* 既定座標表示時の注意書き（Req 2.6）＝地図上部のオーバーレイ */
 .map-view__notice {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 1100;
   margin: 0;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  background: var(--color-surface, #f5f7fa);
+  background: rgba(245, 247, 250, 0.95);
   color: var(--color-muted, #5a6472);
   font-size: 0.8rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 /* 読み込み中／失敗のステータス表示（Req 2.1, 2.7） */
@@ -145,14 +153,22 @@
   border-radius: 50%;
 }
 
-/* スポット詳細パネル（Req 2.4, 2.5） */
+/* スポット詳細パネル（Req 2.4, 2.5）＝地図に重ねるボトムシート。
+   表示してもレイアウトサイズは変えない（地図に重なる）。 */
 .map-detail {
-  position: relative;
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1300;
+  max-height: 55%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1rem 2.25rem 1rem 1rem;
   border: 1px solid var(--color-border, #e0e4ea);
   border-radius: 12px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
 }
 
 .map-detail__close {

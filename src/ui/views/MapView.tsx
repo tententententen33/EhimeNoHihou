@@ -56,6 +56,8 @@ export interface MapSurfaceProps {
   center: { lat: number; lng: number };
   /** 現在位置マーカーを描画するか（位置が利用可能なときのみ true） */
   hasPlayerPosition: boolean;
+  /** 現在位置の水平精度（メートル）。精度円の半径表示に用いる（任意） */
+  playerAccuracyMeters?: number;
   /** 描画するマーカー集合（解放済み＋ロック） */
   markers: SurfaceMarker[];
   /** マーカー選択時のハンドラ */
@@ -69,6 +71,8 @@ export interface MapViewProps {
   spots: Spot[];
   /** 現在位置（精度50m以内が取得できている場合）。無ければ null（Req 2.6） */
   position: { lat: number; lng: number } | null;
+  /** 現在位置の水平精度（メートル）。精度円表示に用いる（任意） */
+  positionAccuracyMeters?: number;
   /** 地図描画状態。既定は 'ready'（Req 2.1, 2.7） */
   status?: MapRenderStatus;
   /** 読み込み失敗時の再試行ハンドラ（Req 2.7） */
@@ -98,6 +102,7 @@ export function MapView({
   player,
   spots,
   position,
+  positionAccuracyMeters,
   status = 'ready',
   onRetry,
   onLoadTimeout,
@@ -206,6 +211,7 @@ export function MapView({
   const surfaceProps: MapSurfaceProps = {
     center,
     hasPlayerPosition: position !== null,
+    playerAccuracyMeters: positionAccuracyMeters,
     markers: surfaceMarkers,
     onSelectMarker: setSelectedSpotId,
   };

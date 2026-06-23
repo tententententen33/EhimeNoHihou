@@ -13,6 +13,9 @@ import { useEffect, useState } from 'react';
 import type { EquipmentSlot, ItemCatalog, PlayerState } from '../../domain/types';
 import {
   computeStats,
+  baseStatsForLevel,
+  levelForExperience,
+  totalStats,
   getProgressDisplay,
   groupOwnedEquipment,
 } from '../../domain/character';
@@ -27,6 +30,9 @@ const SLOT_LABEL: Record<EquipmentSlot, string> = {
   armor: '防具',
   accessory: 'アクセサリ',
 };
+
+// 装備サブページのスロット表示順。
+const EQUIP_SLOTS: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
 // ステータス項目の日本語表示ラベル（表示順を固定）。
 const STAT_ROWS: ReadonlyArray<{ key: keyof ReturnType<typeof computeStats>; label: string }> = [
@@ -43,6 +49,8 @@ export interface CharacterViewProps {
   itemCatalog: ItemCatalog;
   // 装備変更ハンドラ。対象アイテム id を親へ通知する（Req 8.3）。
   onEquip: (itemId: string) => void;
+  // 装備解除ハンドラ。対象スロットを親へ通知する。
+  onUnequip: (slot: EquipmentSlot) => void;
   // レベルアップ通知。表示対象が無い場合は null（Req 6.3）。
   levelUp?: { newLevel: number } | null;
   // レベルアップ通知の解除ハンドラ（明示的解除, Req 6.3）。
@@ -53,16 +61,25 @@ export function CharacterView({
   player,
   itemCatalog,
   onEquip,
+  onUnequip,
   levelUp = null,
   onDismissLevelUp,
 }: CharacterViewProps) {
   // ドメイン純粋関数から表示情報を導出する（再計算は描画時に都度行う）。
   const progress = getProgressDisplay(player);
   const slotGroups = groupOwnedEquipment(player, itemCatalog);
-  const stats = computeStats(player, itemCatalog);
+  // ステータスは「レベル基礎値 + 装備効果 = 合計」に分けて表示する。
+  const level = levelForExperience(player.experience);
+  const base = baseStatsForLevel(level);
+  const equip = computeStats(player, itemCatalog);
+  const stats = totalStats(player, itemCatalog);
 
   // レベルアップ通知を最低3秒は解除できないようにするためのフラグ（Req 6.3）。
   const [canDismiss, setCanDismiss] = useState(false);
+  // キャラページ内のサブページ切り替え（ステータス / 装備）。
+  const [tab, setTab] = useState<'status' | 'equip'>('status');
+  // 装備サブページで選択中のスロット（武器 / 防具 / アクセサリ）。
+  const [equipSlot, setEquipSlot] = useState<EquipmentSlot>('weapon');
 
   useEffect(() => {
     // 通知が表示されていない間は何もしない。
@@ -133,66 +150,142 @@ export function CharacterView({
         </dl>
       </div>
 
-      {/* 合成ステータス（Req 8.7, 8.8） */}
-      <div className="character-stats">
-        <h2 className="character-section__title">ステータス</h2>
-        <dl className="character-stats__grid">
-          {STAT_ROWS.map((row) => (
-            <div key={row.key} className="character-stats__row">
-              <dt>{row.label}</dt>
-              <dd>{stats[row.key]}</dd>
-            </div>
-          ))}
-        </dl>
+      {/* サブページ切り替え（ステータス / 装備） */}
+      <div className="character-tabs" role="tablist" aria-label="キャラクター表示切り替え">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'status'}
+          className={`character-tab${tab === 'status' ? ' character-tab--active' : ''}`}
+          onClick={() => setTab('status')}
+        >
+          ステータス
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'equip'}
+          className={`character-tab${tab === 'equip' ? ' character-tab--active' : ''}`}
+          onClick={() => setTab('equip')}
+        >
+          装備
+        </button>
       </div>
 
-      {/* スロット別の所持装備（Req 8.1, 8.2, 8.3） */}
-      <div className="character-equipment">
-        <h2 className="character-section__title">装備</h2>
-        {slotGroups.map((group) => (
-          <div key={group.slot} className="character-slot">
-            <h3 className="character-slot__title">{SLOT_LABEL[group.slot]}</h3>
-            {group.isEmpty ? (
-              // 所持アイテムが無いスロットは空状態を表示（Req 8.2）。
-              <p className="character-slot__empty">所持アイテムがありません</p>
-            ) : (
-              <ul className="character-slot__items">
-                {group.items.map((item) => {
-                  const isActive = group.activeItemId === item.id;
-                  return (
-                    <li
-                      key={item.id}
-                      className={`character-item${isActive ? ' character-item--active' : ''}`}
-                    >
-                      <div className="character-item__info">
-                        <span className="character-item__name">{item.name}</span>
-                        <span className="character-item__effect">
-                          {item.effectDescription}
-                        </span>
-                      </div>
-                      {isActive ? (
-                        // 現在の有効装備は装備済みを示す（再装備不要）。
-                        <span className="character-item__badge" aria-label="装備中">
-                          装備中
-                        </span>
-                      ) : (
-                        // 装備変更は親へ委譲する（Req 8.3）。
-                        <button
-                          type="button"
-                          className="character-item__equip"
-                          onClick={() => onEquip(item.id)}
-                        >
-                          装備する
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+      {/* ステータスサブページ（合成ステータス, Req 8.7, 8.8） */}
+      {tab === 'status' && (
+        <div className="character-stats">
+          <h2 className="character-section__title">ステータス</h2>
+          <dl className="character-stats__grid">
+            {STAT_ROWS.map((row) => (
+              <div key={row.key} className="character-stats__row">
+                <dt>{row.label}</dt>
+                <dd>
+                  <span className="character-stats__total">{stats[row.key]}</span>
+                  <span className="character-stats__breakdown">
+                    （基礎{base[row.key]}＋装備{equip[row.key]}）
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
+      {/* 装備サブページ（スロット別につけ外し, Req 8.1, 8.2, 8.3） */}
+      {tab === 'equip' && (
+        <div className="character-equipment">
+          {/* スロット選択タブ（武器 / 防具 / アクセサリ） */}
+          <div className="character-slot-tabs" role="tablist" aria-label="装備スロット切り替え">
+            {EQUIP_SLOTS.map((slot) => (
+              <button
+                key={slot}
+                type="button"
+                role="tab"
+                aria-selected={equipSlot === slot}
+                className={`character-slot-tab${equipSlot === slot ? ' character-slot-tab--active' : ''}`}
+                onClick={() => setEquipSlot(slot)}
+              >
+                {SLOT_LABEL[slot]}
+              </button>
+            ))}
           </div>
-        ))}
-      </div>
+
+          {(() => {
+            const group = slotGroups.find((g) => g.slot === equipSlot);
+            if (group === undefined) {
+              return null;
+            }
+            const activeItem =
+              group.activeItemId !== null ? itemCatalog[group.activeItemId] : undefined;
+            return (
+              <div className="character-slot">
+                {/* 現在の装備状況と「外す」操作 */}
+                <div className="character-equipped-banner">
+                  <span className="character-equipped-banner__label">現在の{SLOT_LABEL[equipSlot]}：</span>
+                  {activeItem ? (
+                    <>
+                      <span className="character-equipped-banner__name">{activeItem.name}</span>
+                      <button
+                        type="button"
+                        className="character-item__unequip"
+                        onClick={() => onUnequip(equipSlot)}
+                      >
+                        外す
+                      </button>
+                    </>
+                  ) : (
+                    <span className="character-equipped-banner__none">なし（未装備）</span>
+                  )}
+                </div>
+
+                {group.isEmpty ? (
+                  // 所持アイテムが無いスロットは空状態を表示（Req 8.2）。
+                  <p className="character-slot__empty">このスロットの所持アイテムはありません</p>
+                ) : (
+                  <ul className="character-slot__items">
+                    {group.items.map((item) => {
+                      const isActive = group.activeItemId === item.id;
+                      return (
+                        <li
+                          key={item.id}
+                          className={`character-item${isActive ? ' character-item--active' : ''}`}
+                        >
+                          <div className="character-item__info">
+                            <span className="character-item__name">{item.name}</span>
+                            <span className="character-item__effect">
+                              {item.effectDescription}
+                            </span>
+                          </div>
+                          {isActive ? (
+                            // 装備中アイテムは「外す」ボタンで解除できる。
+                            <button
+                              type="button"
+                              className="character-item__unequip"
+                              onClick={() => onUnequip(equipSlot)}
+                            >
+                              外す
+                            </button>
+                          ) : (
+                            // 未装備アイテムは「装備する」（同スロットの旧装備は自動で外れる, Req 8.3）。
+                            <button
+                              type="button"
+                              className="character-item__equip"
+                              onClick={() => onEquip(item.id)}
+                            >
+                              装備する
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </section>
   );
 }

@@ -36,6 +36,8 @@ export interface BossWinResult {
   nextState: PlayerState;
   grantedLimitedItemIds: string[];
   newlyDefeated: boolean;
+  /** 今回の確率ドロップで獲得したアイテム id 一覧（中ボス固有ドロップなど）。 */
+  droppedItemIds: string[];
 }
 
 /**
@@ -74,9 +76,15 @@ export function isAvailable(boss: Boss, visited: VisitedAreas): boolean {
  *
  * @param state 現在のプレイヤー状態
  * @param boss 勝利したボス定義
- * @returns nextState / grantedLimitedItemIds / newlyDefeated を含む結果
+ * @param rng [0,1) を返す乱数生成器（確率ドロップの評価に使用）。既定は Math.random。
+ *            テストでは決定論的な関数を注入できる。
+ * @returns nextState / grantedLimitedItemIds / newlyDefeated / droppedItemIds を含む結果
  */
-export function resolveWin(state: PlayerState, boss: Boss): BossWinResult {
+export function resolveWin(
+  state: PlayerState,
+  boss: Boss,
+  rng: () => number = Math.random
+): BossWinResult {
   // 未取得の Limited_Item のみを抽出する（重複排除, Req 9.4）。
   // 同一勝利内での重複指定も 1 回に正規化する。
   const alreadyGranted = new Set(state.grantedLimitedItemIds);
@@ -88,12 +96,24 @@ export function resolveWin(state: PlayerState, boss: Boss): BossWinResult {
     }
   }
 
+  // 確率ドロップ表を評価する（中ボス固有アイテムなど）。
+  // 各エントリは確率 probability（0〜1）で獲得する。乱数は注入された rng を用いる。
+  const droppedItemIds: string[] = [];
+  if (boss.dropTable) {
+    for (const entry of boss.dropTable) {
+      const p = Math.min(Math.max(entry.probability, 0), 1);
+      if (rng() < p) {
+        droppedItemIds.push(entry.itemId);
+      }
+    }
+  }
+
   // Reward_Engine 経由で報酬を付与する（Req 9.3）。
-  // コイン・経験値・通常アイテムに加え、未取得の Limited_Item を所持へ加える。
+  // コイン・経験値・通常アイテムに加え、未取得の Limited_Item とドロップ品を所持へ加える。
   const afterReward = applyReward(state, {
     coins: boss.reward.coins,
     experience: boss.reward.experience,
-    items: [...boss.reward.items, ...newLimitedItemIds],
+    items: [...boss.reward.items, ...newLimitedItemIds, ...droppedItemIds],
   });
 
   // 撃破記録を重複なく更新する（Req 9.5）。
@@ -118,6 +138,7 @@ export function resolveWin(state: PlayerState, boss: Boss): BossWinResult {
     nextState,
     grantedLimitedItemIds: newLimitedItemIds,
     newlyDefeated,
+    droppedItemIds,
   };
 }
 

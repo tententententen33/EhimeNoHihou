@@ -27,6 +27,7 @@
 
 import type {
   Boss,
+  EquipmentSlot,
   ISODateTime,
   ItemCatalog,
   PlayerState,
@@ -42,6 +43,7 @@ import { applyReward, grantQuestCompletionReward } from '../domain/reward';
 import { computeWalkReward } from '../domain/reward';
 import {
   equip,
+  unequip,
   levelForExperience,
   type EquipError,
 } from '../domain/character';
@@ -81,8 +83,20 @@ export interface RegionUnlockedNotification {
   regionName: string;
 }
 
+/** アイテムドロップ通知。ボス・中ボス撃破で確率ドロップや限定アイテムを得たとき発行する。 */
+export interface ItemDroppedNotification {
+  kind: 'item-dropped';
+  /** ドロップ元のボス表示名 */
+  bossName: string;
+  /** 獲得したアイテム id 一覧（確率ドロップ＋新規限定アイテム） */
+  itemIds: string[];
+}
+
 /** ストアが発行する通知の判別共用体。 */
-export type StoreNotification = LevelUpNotification | RegionUnlockedNotification;
+export type StoreNotification =
+  | LevelUpNotification
+  | RegionUnlockedNotification
+  | ItemDroppedNotification;
 
 /** 通知購読リスナ。 */
 export type NotificationListener = (notification: StoreNotification) => void;
@@ -104,6 +118,7 @@ export type StoreError =
   | { kind: 'purchase'; error: PurchaseError }
   | { kind: 'equip'; error: EquipError }
   | { kind: 'bossUnavailable'; bossId: string }
+  | { kind: 'bossPrerequisite'; bossId: string }
   | { kind: 'unknownBoss'; bossId: string }
   | { kind: 'unknownItem'; itemId: string };
 
@@ -196,6 +211,9 @@ export class SessionStore {
   private readonly unlockOrder: string[];
   private readonly regionUnlockContext: RegionUnlockContext;
 
+  /** Region id → その地域に属する中ボス（midBoss）id 一覧。ボス解禁条件の判定に使う。 */
+  private readonly midBossIdsByRegion: Map<string, string[]>;
+
   /** 通知購読リスナ集合。 */
   private readonly listeners = new Set<NotificationListener>();
 
@@ -226,6 +244,20 @@ export class SessionStore {
       context.regionUnlockContext ?? {
         spotIdsByRegion: buildSpotIdsByRegion(context.spots),
       };
+
+    // 中ボス（kind==='midBoss', spot 紐付け）を、所属スポットの地域別に集計する。
+    // ボス（市町ボス）の解禁条件「市内の中ボスを全撃破」の判定に用いる。
+    const spotRegionById = new Map(context.spots.map((s) => [s.id, s.regionId]));
+    const midMap = new Map<string, string[]>();
+    for (const boss of context.bosses) {
+      if (boss.kind === 'midBoss' && boss.bind.kind === 'spot') {
+        const regionId = spotRegionById.get(boss.bind.spotId);
+        if (regionId !== undefined) {
+          (midMap.get(regionId) ?? midMap.set(regionId, []).get(regionId)!).push(boss.id);
+        }
+      }
+    }
+    this.midBossIdsByRegion = midMap;
   }
 
   // -------------------------------------------------------------------------
@@ -423,6 +455,36 @@ export class SessionStore {
     return this.commitRollback(before, result.value);
   }
 
+  /**
+   * 指定スロットの装備を解除する（外す）。
+   *
+   * 既に未装備の場合は据え置き（永続化不要）で成功を返す。装備中の場合は
+   * 解除してロールバック型でコミットする（Req 8.6）。
+   *
+   * @param slot 解除する装備スロット。
+   */
+  async unequipItem(slot: EquipmentSlot): Promise<CommitActionResult> {
+    const before = this.state;
+    if (before.equipped[slot] === null) {
+      // 元から未装備: 状態不変で成功（永続化不要）。
+      return { ok: true, state: this.state };
+    }
+    const next = unequip(before, slot);
+    return this.commitRollback(before, next);
+  }
+
+  /** 市町ボスの解禁条件（市内の中ボス全撃破）を満たすか判定する。 */
+  canFightRegionBoss(bossId: string): boolean {
+    const boss = this.bossesById.get(bossId);
+    if (boss === undefined || boss.bind.kind !== 'region') {
+      // 中ボスや不明なボスは本判定の対象外（true を返す）。
+      return true;
+    }
+    const required = this.midBossIdsByRegion.get(boss.bind.regionId) ?? [];
+    const defeated = new Set(this.state.defeatedBossIds);
+    return required.every((id) => defeated.has(id));
+  }
+
   // -------------------------------------------------------------------------
   // アクション: ボス撃破
   // -------------------------------------------------------------------------
@@ -449,8 +511,29 @@ export class SessionStore {
       return { ok: false, state: this.state, error: { kind: 'bossUnavailable', bossId } };
     }
 
+    // 市町ボスは、その市内の中ボスを全撃破していないと戦えない。
+    if (boss.kind === 'boss' && !this.canFightRegionBoss(bossId)) {
+      return { ok: false, state: this.state, error: { kind: 'bossPrerequisite', bossId } };
+    }
+
     const winResult = resolveWin(before, boss);
-    return this.commitRollback(before, winResult.nextState);
+    const committed = await this.commitRollback(before, winResult.nextState);
+
+    // 永続化が確定したら、確率ドロップ／新規限定アイテムの取得を通知する。
+    if (committed.ok) {
+      const droppedIds = [
+        ...winResult.droppedItemIds,
+        ...winResult.grantedLimitedItemIds,
+      ];
+      if (droppedIds.length > 0) {
+        this.emit({
+          kind: 'item-dropped',
+          bossName: boss.name ?? boss.id,
+          itemIds: droppedIds,
+        });
+      }
+    }
+    return committed;
   }
 
   // -------------------------------------------------------------------------

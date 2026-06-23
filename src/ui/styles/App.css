@@ -2,19 +2,37 @@
    レイアウト本体・タッチターゲット（44x44px 以上）は AppLayout.css 側で担保する。 */
 
 .app-map-pane {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
+  /* main を埋め尽くす全面マップ。ボタン類・詳細は地図に重ねるオーバーレイにする。 */
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
-/* 通知バナー（地域アンロック・位置メッセージ） */
+/* MapView 本体を全面に敷く（サイズはタップ等で変化しない）。 */
+.app-map-pane > .map-view {
+  position: absolute;
+  inset: 0;
+}
+
+/* 通知バナー（地域アンロック・位置メッセージ）＝地図上部のオーバーレイ */
 .app-banner {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 1200;
   margin: 0;
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 0.9rem;
   line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 位置メッセージはバナーの下に少しずらして重ねる */
+.app-banner--warning {
+  top: 56px;
 }
 
 .app-banner--region {
@@ -29,22 +47,26 @@
   border: 1px solid #f2b8b5;
 }
 
-/* 操作エリア（現在地を確認） */
+/* 操作エリア（現在地を確認）＝地図右下のフローティングボタン */
 .app-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1200;
   display: flex;
   gap: 8px;
 }
 
 .app-actions__primary {
-  flex: 1;
-  min-height: 44px;
-  padding: 10px 16px;
-  font-size: 1rem;
-  font-weight: 600;
+  min-height: 48px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #fff;
   background: #1f7a4d;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 
@@ -52,12 +74,21 @@
   background: #195f3c;
 }
 
-/* 開発ツール（デモ操作） */
+/* 開発ツール（デモ操作）＝地図左下のフローティングパネル。開いても地図サイズは不変。 */
 .app-devtools {
-  border: 1px dashed #c9c9c9;
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 1200;
+  max-width: 72%;
+  max-height: 55%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #c9c9c9;
   border-radius: 8px;
   padding: 8px 12px;
-  background: #fafafa;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .app-devtools > summary {
@@ -100,4 +131,44 @@
   margin: 0;
   font-size: 0.85rem;
   color: #888;
+}
+
+/* 画面上部のトースト通知（レベルアップ・ドロップなど）。
+   どのページにいても見えるよう画面上部に固定表示する。 */
+.app-toast {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  max-width: 92%;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(26, 32, 44, 0.92);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  animation: app-toast-in 0.2s ease-out;
+}
+
+@keyframes app-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* 装備ボタン無効時の見た目（中ボス未撃破のボスなど）。 */
+.app-devtools__group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #c9c9c9;
+  color: #999;
 }

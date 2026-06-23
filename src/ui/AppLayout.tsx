@@ -66,7 +66,7 @@ export function AppLayout({
       </header>
 
       {/* main 領域（Req 12.1）。取得状態に応じて表示を切り替える */}
-      <main className="app-main">
+      <main className="app-main" data-view={activeView}>
         {renderMain({ loadStatus, activeView, views, onRetry })}
       </main>
 

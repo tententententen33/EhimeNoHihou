@@ -17,8 +17,12 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
+  height: 100%;
   /* ビューポート幅を超える横スクロールを抑止する基盤（Req 12.4） */
-  overflow-x: hidden;
+  overflow: hidden;
+  /* スマホでページ自体をスクロール／スワイプさせない（端のラバーバンドも抑止） */
+  overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
 body {
@@ -26,17 +30,23 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   -webkit-text-size-adjust: 100%;
+  /* iOS でのページ全体スクロールを防ぐ */
+  position: fixed;
+  inset: 0;
 }
 
 #root {
-  min-height: 100vh;
+  /* 動的ビューポート高（モバイルのアドレスバー増減に追従） */
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* header / main / footer の3領域レイアウト（Req 12.1） */
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
 }
 
 .app-header,

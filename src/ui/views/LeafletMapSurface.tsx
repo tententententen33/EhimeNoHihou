@@ -45,13 +45,14 @@ function lockedIcon(selected: boolean): L.DivIcon {
   });
 }
 
-/** 現在位置用の divIcon。 */
+/** 現在位置用の divIcon（Google Map 風の青い点滅ドット）。 */
 function playerIcon(): L.DivIcon {
   return L.divIcon({
     className: 'leaflet-player-icon',
-    html: '<div class="leaflet-player" aria-hidden="true"></div>',
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
+    // pulse: 拡散する点滅リング / dot: 中心の青い点
+    html: '<div class="leaflet-player" aria-hidden="true"><span class="leaflet-player__pulse"></span><span class="leaflet-player__dot"></span></div>',
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
   });
 }
 
@@ -71,6 +72,7 @@ function escapeHtml(value: string): string {
 export function LeafletMapSurface({
   center,
   hasPlayerPosition,
+  playerAccuracyMeters,
   markers,
   onSelectMarker,
 }: MapSurfaceProps) {
@@ -82,6 +84,8 @@ export function LeafletMapSurface({
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
   // 現在位置マーカー。
   const playerMarkerRef = useRef<L.Marker | null>(null);
+  // 現在位置の精度円（Google Map 風の薄青い円）。
+  const accuracyCircleRef = useRef<L.Circle | null>(null);
   // 直近にセンタリングした座標（プレイヤー位置更新時のみ再センタリングするため）。
   const lastCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   // 最新の onSelectMarker をイベントから参照するための ref。
@@ -114,8 +118,16 @@ export function LeafletMapSurface({
     // flex/可変レイアウト内でのサイズ確定のため、次フレームで再計算する。
     const sizeTimer = window.setTimeout(() => map.invalidateSize(), 0);
 
+    // コンテナのサイズ変化（全面化・回転・アドレスバー増減など）に追従して再計算する。
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver(() => map.invalidateSize());
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
       window.clearTimeout(sizeTimer);
+      resizeObserver?.disconnect();
       map.remove();
       mapRef.current = null;
       markerLayerRef.current = null;
@@ -148,28 +160,59 @@ export function LeafletMapSurface({
     }
   }, [markers]);
 
-  // 現在位置マーカーの更新。
+  // 現在位置マーカー＋精度円の更新。
   useEffect(() => {
     const map = mapRef.current;
     if (map === null) {
       return;
     }
     if (hasPlayerPosition) {
+      const latlng: L.LatLngExpression = [center.lat, center.lng];
+
+      // 中心の点滅ドット
       if (playerMarkerRef.current === null) {
-        playerMarkerRef.current = L.marker([center.lat, center.lng], {
+        playerMarkerRef.current = L.marker(latlng, {
           icon: playerIcon(),
           alt: '現在位置',
           interactive: false,
           zIndexOffset: 1000,
         }).addTo(map);
       } else {
-        playerMarkerRef.current.setLatLng([center.lat, center.lng]);
+        playerMarkerRef.current.setLatLng(latlng);
       }
-    } else if (playerMarkerRef.current !== null) {
-      playerMarkerRef.current.remove();
-      playerMarkerRef.current = null;
+
+      // 精度円（半径＝水平精度メートル）。精度が大きすぎる場合は上限でクランプする。
+      const radius = Math.min(Math.max(playerAccuracyMeters ?? 0, 0), 1000);
+      if (radius > 0) {
+        if (accuracyCircleRef.current === null) {
+          accuracyCircleRef.current = L.circle(latlng, {
+            radius,
+            interactive: false,
+            color: '#1565c0',
+            weight: 1,
+            opacity: 0.4,
+            fillColor: '#1a73e8',
+            fillOpacity: 0.12,
+          }).addTo(map);
+        } else {
+          accuracyCircleRef.current.setLatLng(latlng);
+          accuracyCircleRef.current.setRadius(radius);
+        }
+      } else if (accuracyCircleRef.current !== null) {
+        accuracyCircleRef.current.remove();
+        accuracyCircleRef.current = null;
+      }
+    } else {
+      if (playerMarkerRef.current !== null) {
+        playerMarkerRef.current.remove();
+        playerMarkerRef.current = null;
+      }
+      if (accuracyCircleRef.current !== null) {
+        accuracyCircleRef.current.remove();
+        accuracyCircleRef.current = null;
+      }
     }
-  }, [hasPlayerPosition, center.lat, center.lng]);
+  }, [hasPlayerPosition, center.lat, center.lng, playerAccuracyMeters]);
 
   // センター座標が変わったら（主に現在位置の更新時）地図を移動する。
   // ユーザーのパン操作を妨げないよう、座標が実際に変化したときのみ再センタリングする。

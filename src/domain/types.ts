@@ -128,6 +128,10 @@ export interface QuestDefinition {
   id: string;
   /** 地域イベント由来の場合のイベント識別子（後期フェーズ Req 17） */
   eventId?: string;
+  /** 表示名（任意）。未指定時は id を流用してよい。 */
+  name?: string;
+  /** 関連付ける地域 id（任意）。ミッションの地域ゲート（解放済みのみ表示）に用いる。 */
+  regionId?: string;
   /**
    * 達成条件。
    * - spots: 必須スポット集合（1〜100）
@@ -191,6 +195,11 @@ export interface ShopItem {
   statEffects: Partial<CharacterStats>;
   /** true は Limited_Item で Shop 一覧から除外（Req 7.5） */
   isLimited: boolean;
+  /**
+   * 関連付ける地域 id（任意）。ショップの地域ゲートに用いる。
+   * 設定された場合、その地域が解放済みのときのみショップに並べる運用とする。
+   */
+  regionId?: string;
 }
 
 /**
@@ -206,12 +215,26 @@ export type ItemCatalog = Record<string, ShopItem>;
 /** ボス定義（Req 9.1） */
 export interface Boss {
   id: string;
+  /** 表示名（任意）。未指定時は id を流用してよい。 */
+  name?: string;
+  /**
+   * ボスの種別（任意）。
+   * - 'boss': 市町を代表するボス（Region に紐づく）
+   * - 'midBoss': 各スポットに配置する中ボス（Spot に紐づく）
+   * 未指定時は 'boss' とみなしてよい。
+   */
+  kind?: 'boss' | 'midBoss';
   /** 紐づく単一の Spot または Region（Req 9.1） */
   bind:
     | { kind: 'spot'; spotId: string }
     | { kind: 'region'; regionId: string };
   /** 報酬。少なくとも 1 つの Limited_Item を含む（Req 9.1, 9.4） */
   reward: RewardGrant & { limitedItemIds: string[] };
+  /**
+   * 確率ドロップ表（任意）。勝利時に各エントリの確率（0〜1）で itemId を獲得する。
+   * 中ボス固有アイテムの確率ドロップに用いる。乱数は注入可能な RNG で評価する。
+   */
+  dropTable?: { itemId: string; probability: number }[];
 }
 
 // ---------------------------------------------------------------------------

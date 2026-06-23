@@ -15,10 +15,11 @@
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   /* 子要素が幅を超えても横スクロールを生じさせない（Req 12.4） */
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* header 領域 */
@@ -55,11 +56,23 @@
 /* main 領域。残り高さを占有しスクロールはここで吸収する */
 .app-main {
   flex: 1 1 auto;
+  /* flex 子が縮めるように min-height:0（内部スクロールを成立させる） */
+  min-height: 0;
   padding: 1rem;
   /* main 内コンテンツのはみ出しを抑止（Req 12.4） */
   max-width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  /* 内部スクロール時に親（ページ）へスクロールを伝播させない */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* マップビュー表示時は main を埋め尽くし、内部スクロールを発生させない
+   （地図とオーバーレイで完結させる）。App 側で data-view="map" を付与する。 */
+.app-main[data-view='map'] {
+  padding: 0;
+  overflow: hidden;
 }
 
 /* footer 領域＝メニューナビゲーション */

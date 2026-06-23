@@ -250,3 +250,105 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ステータスの合計値と内訳（基礎＋装備）表示。 */
+.character-stats__total {
+  font-weight: 700;
+}
+
+.character-stats__breakdown {
+  margin-left: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--color-muted, #5a6472);
+}
+
+/* サブページ切り替えタブ（ステータス / 装備） */
+.character-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.character-tab {
+  flex: 1 1 0;
+  min-height: 44px;
+  border: 1px solid var(--color-border, #e0e4ea);
+  border-radius: var(--app-radius, 12px);
+  background: var(--color-surface, #f5f7fa);
+  color: var(--color-muted, #5a6472);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.character-tab--active {
+  background: var(--color-primary, #1565c0);
+  border-color: var(--color-primary, #1565c0);
+  color: #fff;
+}
+
+/* 装備スロット選択タブ（武器 / 防具 / アクセサリ） */
+.character-slot-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.character-slot-tab {
+  flex: 1 1 0;
+  min-height: 44px;
+  border: 1px solid var(--color-border, #e0e4ea);
+  border-radius: var(--app-radius, 12px);
+  background: var(--color-bg, #fff);
+  color: var(--color-muted, #5a6472);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.character-slot-tab--active {
+  background: #e8f0fe;
+  border-color: var(--color-primary, #1565c0);
+  color: var(--color-primary, #1565c0);
+}
+
+/* 現在の装備バナー（外すボタン付き） */
+.character-equipped-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.6rem;
+  border-radius: var(--app-radius, 12px);
+  background: var(--color-surface, #f5f7fa);
+  border: 1px solid var(--color-border, #e0e4ea);
+  font-size: 0.85rem;
+}
+
+.character-equipped-banner__label {
+  color: var(--color-muted, #5a6472);
+}
+
+.character-equipped-banner__name {
+  font-weight: 700;
+}
+
+.character-equipped-banner__none {
+  color: var(--color-muted, #5a6472);
+}
+
+/* 「外す」ボタン */
+.character-item__unequip {
+  flex: 0 0 auto;
+  min-height: 44px;
+  min-width: 44px;
+  margin-left: auto;
+  padding: 0 1rem;
+  border: 1px solid #c62828;
+  border-radius: 8px;
+  background: #fff;
+  color: #c62828;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
