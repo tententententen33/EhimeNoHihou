@@ -107,8 +107,9 @@
   padding: 0.4rem 0.25rem;
   border: none;
   background: transparent;
-  color: var(--color-muted);
-  font-size: 0.7rem;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -119,7 +120,7 @@
 }
 
 .app-nav__item--active {
-  color: var(--color-primary);
+  color: #0d47a1;
   font-weight: 700;
 }
 
@@ -206,6 +207,6 @@
   }
 
   .app-nav__label {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
   }
 }
