@@ -39,12 +39,14 @@ import {
 } from './state/store';
 import type { ItemCatalog, PlayerState } from './domain/types';
 import { isAvailable } from './domain/boss';
+import { haversineDistanceMeters } from './domain/location';
 import './ui/styles/App.css';
 
 import {
   BOSSES,
   COLLECTIONS,
   ITEM_CATALOG,
+  REGIONS,
   SPOTS,
   TITLES,
   TOTAL_SPOTS,
@@ -200,18 +202,22 @@ export function App() {
   // -------------------------------------------------------------------------
 
   /**
-   * スポット入場を反映する一連のフロー（Req 1.3, 3.1, 4.2, 5.3, 10.3, 11.2）。
-   * スタンプ付与 → クエスト進行 → 初回訪問報酬（visitSpot 内）→ 地域アンロック → 称号付与。
+   * スポット入場を反映する一連のフロー（Req 1.3, 3.1, 4.2, 5.3, 11.2）。
+   * 現地到達 → その地域を解放（位置ベース）→ スタンプ付与・クエスト進行・初回訪問報酬
+   * → 称号付与。
    */
   const enterSpot = useCallback(async (spotId: string) => {
     const store = storeRef.current;
     if (!store) {
       return;
     }
+    // 現地に到達したら、そのスポットが属する地域を解放する（位置ベースの解放）。
+    const spot = SPOTS.find((s) => s.id === spotId);
+    if (spot) {
+      await store.enterRegion(spot.regionId);
+    }
     // スタンプ付与・クエスト進行・初回訪問報酬（Req 3.1, 4.2, 5.3）。
     await store.visitSpot(spotId, new Date().toISOString());
-    // 地域アンロック（条件を満たせば次の地域を解放, Req 10.3）。
-    await store.tryUnlockNextRegion();
     // 称号付与（条件を満たせば付与, Req 11.2）。
     await store.evaluateTitles();
     setPlayer(store.getState());
@@ -233,7 +239,24 @@ export function App() {
     setPosition({ lat: result.position.lat, lng: result.position.lng });
     setPositionAccuracy(result.position.accuracyMeters);
 
-    // 入場スポット判定（Req 1.3, 1.4, 1.5）。
+    // 現在地に最も近いスポットの地域を「到達した地域」とみなして解放する
+    // （その地域に行けば解放, 位置ベース）。
+    const store = storeRef.current;
+    let nearestRegionId: string | null = null;
+    let nearestDist = Number.POSITIVE_INFINITY;
+    for (const s of SPOTS) {
+      const d = haversineDistanceMeters(result.position, s.center);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestRegionId = s.regionId;
+      }
+    }
+    if (store && nearestRegionId !== null) {
+      await store.enterRegion(nearestRegionId);
+      setPlayer(store.getState());
+    }
+
+    // 入場スポット判定（半径50m以内, Req 1.3, 1.4, 1.5）。
     const presence = service.resolvePresence(result.position, SPOTS);
     if (presence.spotId !== null) {
       await enterSpot(presence.spotId);
@@ -250,14 +273,13 @@ export function App() {
     setPlayer(store.getState());
   }, []);
 
-  /** ボスを撃破する（勝利, Req 9.3）。撃破後にアンロック・称号評価も行う。 */
+  /** ボスを撃破する（勝利, Req 9.3）。撃破後に称号評価も行う。 */
   const defeatBoss = useCallback(async (bossId: string) => {
     const store = storeRef.current;
     if (!store) {
       return;
     }
     await store.defeatBoss(bossId);
-    await store.tryUnlockNextRegion();
     await store.evaluateTitles();
     setPlayer(store.getState());
   }, []);
@@ -337,11 +359,12 @@ export function App() {
     };
 
     // 解放済みかつ未訪問のスポット（デモ用の入場ボタン対象）。
+    // 位置ベース解放のデモのため、未訪問スポットは全地域から選べる（＝その地に「行く」と解放）。
     const stampedSpotIds = new Set(player.stamps.map((s) => s.spotId));
-    const visitableSpots = SPOTS.filter(
-      (spot) =>
-        player.unlockedRegionIds.includes(spot.regionId) && !stampedSpotIds.has(spot.id)
-    );
+    const visitableSpots = SPOTS.filter((spot) => !stampedSpotIds.has(spot.id));
+
+    // 地域 id → 名前（デモボタンのラベル表示用）。
+    const regionNameById = new Map(REGIONS.map((r) => [r.id, r.name]));
 
     // スポット id → 名前のルックアップ（QuestsView の残り未達条件表示に使用）。
     const spotNameById = new Map(SPOTS.map((s) => [s.id, s.name]));
@@ -380,13 +403,13 @@ export function App() {
         <details className="app-devtools">
           <summary>開発ツール（デモ操作）</summary>
           <div className="app-devtools__group">
-            <span className="app-devtools__label">スポットに入場</span>
+            <span className="app-devtools__label">スポットに入場（現地に行くと地域が解放）</span>
             {visitableSpots.length === 0 ? (
               <p className="app-devtools__empty">入場可能な未訪問スポットはありません。</p>
             ) : (
               visitableSpots.map((spot) => (
                 <button key={spot.id} type="button" onClick={() => void enterSpot(spot.id)}>
-                  {spot.name} に入場
+                  {regionNameById.get(spot.regionId) ?? ''}：{spot.name} に入場
                 </button>
               ))
             )}

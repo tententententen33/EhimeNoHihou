@@ -672,6 +672,59 @@ export class SessionStore {
     };
     return { ok: false, state: this.state, unlockedRegionId: null, error: { kind: 'persistence', error } };
   }
+
+  // -------------------------------------------------------------------------
+  // アクション: 現地到達による地域アンロック（位置ベース）
+  // -------------------------------------------------------------------------
+
+  /**
+   * 指定地域に「到達」したものとして、その地域を解放する（位置ベースのアンロック）。
+   *
+   * 進行チェーンや条件に依存せず、プレイヤーがその地域に行けば解放する。
+   * 既に解放済みの場合は何もせず成功を返す（通知も出さない）。未解放の場合は
+   * 再試行型として解放後状態を永続化し、確定後に地域アンロック通知を発行する。
+   * 永続化に失敗した場合は解放を確定せず、通知も出さない。
+   *
+   * @param regionId 到達した地域の id。
+   */
+  async enterRegion(regionId: string): Promise<RegionUnlockActionResult> {
+    // 未知の地域は無視（状態不変・成功扱い）。
+    if (!this.regionsById.has(regionId)) {
+      return { ok: true, state: this.state, unlockedRegionId: null };
+    }
+    // 既に解放済みなら何もしない。
+    if (this.state.unlockedRegionIds.includes(regionId)) {
+      return { ok: true, state: this.state, unlockedRegionId: null };
+    }
+
+    // 解放後状態を計算（永続化確定までは this.state へ反映しない）。
+    const unlockedState = unlockRegion(this.state, regionId);
+
+    // 再試行型として永続化を試みる（最大 3 回）。
+    const pendingId = `regionEnter-${regionId}-${++this.retryCounter}`;
+    this.controller.enqueueRetry('regionUnlock', unlockedState, pendingId);
+    const sync = await this.controller.sync();
+
+    const outcome = sync.outcomes.find((o) => o.item.id === pendingId);
+    if (outcome?.status === 'persisted') {
+      // 永続化確定後にのみ解放を確定し、通知を発行する。
+      this.state = unlockedState;
+      const region = this.regionsById.get(regionId);
+      this.emit({
+        kind: 'region-unlocked',
+        regionId,
+        regionName: region?.name ?? regionId,
+      });
+      return { ok: true, state: this.state, unlockedRegionId: regionId };
+    }
+
+    // 永続化失敗: 解放を確定しない。
+    const error: PersistenceError = {
+      kind: 'persist-failed',
+      message: '地域の解放を保存できませんでした。解放は確定していません。',
+    };
+    return { ok: false, state: this.state, unlockedRegionId: null, error: { kind: 'persistence', error } };
+  }
 }
 
 /**

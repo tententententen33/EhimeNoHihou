@@ -161,15 +161,19 @@ const SPOT_DESCRIPTION: Record<string, string> = {
     '伊達家ゆかりの現存十二天守の一つ。白壁と御所建築の優雅な姿が美しく、400年の歴史を持つ「上り立ち門」も見どころ。【おすすめ】現存天守と歴史散策。',
 };
 
+// すべてのスポットの訪問判定半径（メートル）。スポット中心から 50m 以内に入ると訪問扱い。
+export const VISIT_RADIUS_METERS = 50;
+
 export const SPOTS: Spot[] = SPOT_ROWS.map(
-  ([id, name, regionId, lat, lng, radius, coins, exp]): Spot => ({
+  ([id, name, regionId, lat, lng, , coins, exp]): Spot => ({
     id,
     name,
     description:
       SPOT_DESCRIPTION[id] ??
       `${name}（${REGION_CHAIN.find((r) => r.id === regionId)?.name ?? ''}）`,
     center: { lat, lng },
-    entryRadiusMeters: radius,
+    // 訪問判定は一律 50m（Req 1.8 の範囲内）。
+    entryRadiusMeters: VISIT_RADIUS_METERS,
     regionId,
     firstVisitReward: { coins, experience: exp, items: [] },
   })
