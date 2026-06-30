@@ -30,3 +30,6 @@ coverage/
 
 # vercel
 .vercel
+
+# TypeScript incremental build info (auto-generated; should not be committed)
+*.tsbuildinfo

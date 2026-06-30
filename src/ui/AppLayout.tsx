@@ -8,7 +8,7 @@ import { useState } from 'react';
 import './styles/AppLayout.css';
 
 // ナビゲーション先のビューを識別するキー（Req 12.2）。
-export type NavKey = 'map' | 'character' | 'shop' | 'quests' | 'collections';
+export type NavKey = 'map' | 'character' | 'shop' | 'quests' | 'collections' | 'friends';
 
 // 初期データ取得状態（Req 12.6, 12.7, 12.8）。
 // - 'loading': User_Data_Store からの取得中（ローディング表示）
@@ -30,22 +30,24 @@ export interface AppLayoutProps {
   initialView?: NavKey;
 }
 
-// メニュー項目の定義（表示順・ラベルは日本語）。
+// メニュー項目の定義（表示順・ラベルは日本語、RPG風アイコン）。
 const NAV_ITEMS: ReadonlyArray<{ key: NavKey; label: string; icon: string }> = [
-  { key: 'map', label: 'マップ', icon: '🗺️' },
-  { key: 'character', label: 'キャラ', icon: '🧙' },
-  { key: 'shop', label: 'ショップ', icon: '🛒' },
+  { key: 'map', label: 'マップ', icon: '🧭' },
+  { key: 'friends', label: 'フレンド', icon: '👥' },
   { key: 'quests', label: 'クエスト', icon: '📜' },
-  { key: 'collections', label: 'コレクション', icon: '🏅' },
+  { key: 'shop', label: 'ショップ', icon: '🏪' },
+  { key: 'collections', label: '図鑑', icon: '📖' },
+  { key: 'character', label: 'マイページ', icon: '⚔️' },
 ];
 
 // NavKey からメニュー定義を引くためのラベル参照。
 const NAV_LABEL: Record<NavKey, string> = {
   map: 'マップ',
-  character: 'キャラ',
+  friends: 'フレンド',
+  character: 'マイページ',
   shop: 'ショップ',
   quests: 'クエスト',
-  collections: 'コレクション',
+  collections: '図鑑',
 };
 
 export function AppLayout({
@@ -61,7 +63,7 @@ export function AppLayout({
     <div className="app-shell">
       {/* header 領域（Req 12.1） */}
       <header className="app-header">
-        <h1 className="app-header__title">愛媛ロケーションRPG</h1>
+        <h1 className="app-header__title">愛媛の秘宝</h1>
         <span className="app-header__view-label">{NAV_LABEL[activeView]}</span>
       </header>
 

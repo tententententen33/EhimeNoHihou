@@ -1,21 +1,37 @@
-/* Quests ビューのスタイル（モバイルファースト, Req 4.7） */
+/* ========================================================================
+   QuestsView - RPGテーマ クエスト一覧
+   ======================================================================== */
 
 .quests-view {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  animation: rpg-fade-in 0.3s ease-out;
 }
 
 .quests-view__heading {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.quests-view__heading::before {
+  content: '📜';
+  font-size: 1.1em;
 }
 
 .quests-view__empty {
   margin: 0;
-  padding: 1rem;
-  color: #666;
+  padding: 2rem 1rem;
+  color: var(--color-muted);
   text-align: center;
+  font-size: 0.9rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
 }
 
 .quests-view__list {
@@ -27,18 +43,33 @@
   gap: 0.75rem;
 }
 
-/* 個々のクエストカード */
+/* === クエストカード === */
 .quest-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 0.75rem;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  animation: rpg-slide-up 0.3s ease-out;
+  animation-fill-mode: both;
 }
 
-/* 完了したクエストは強調表示する */
+.quest-card:nth-child(1) { animation-delay: 0ms; }
+.quest-card:nth-child(2) { animation-delay: 50ms; }
+.quest-card:nth-child(3) { animation-delay: 100ms; }
+.quest-card:nth-child(4) { animation-delay: 150ms; }
+.quest-card:nth-child(5) { animation-delay: 200ms; }
+
 .quest-card--complete {
-  border-color: var(--color-primary, #1565c0);
-  background: #f3f8ff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .quest-card--complete {
+    background: rgba(6, 78, 59, 0.3);
+  }
 }
 
 .quest-card__header {
@@ -49,82 +80,102 @@
 }
 
 .quest-card__title {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.95rem;
   word-break: break-word;
 }
 
-/* 完了バッジ */
 .quest-card__badge {
   flex: none;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  background: var(--color-primary, #1565c0);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .quest-card__counts {
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
 }
 
 .quest-card__counts-value {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--color-primary);
 }
 
 .quest-card__counts-label {
-  font-size: 0.8rem;
-  color: #666;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-weight: 500;
 }
 
-/* 進捗インジケータ */
+/* === 進捗バー === */
 .quest-card__progress {
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
   height: 8px;
-  border-radius: 999px;
-  background: #e8e8e8;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
   overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .quest-card__progress {
+    background: rgba(120, 113, 108, 0.3);
+  }
 }
 
 .quest-card__progress-fill {
   height: 100%;
-  background: var(--color-primary, #1565c0);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
   border-radius: inherit;
-  transition: width 0.3s ease;
+  transition: width 0.4s ease;
 }
 
-/* 残り未達条件 */
+/* === 残り未達条件 === */
 .quest-card__remaining {
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
 }
 
 .quest-card__remaining-summary {
   margin: 0;
-  font-size: 0.85rem;
-  color: #444;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 .quest-card__remaining--done {
   margin: 0.5rem 0 0;
   font-size: 0.85rem;
-  color: var(--color-primary, #1565c0);
-  font-weight: 600;
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 .quest-card__remaining-list {
-  list-style: disc;
-  margin: 0.35rem 0 0;
-  padding-left: 1.25rem;
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
 }
 
 .quest-card__remaining-item {
-  font-size: 0.85rem;
-  word-break: break-word;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  padding-left: 1rem;
+  position: relative;
+}
+
+.quest-card__remaining-item::before {
+  content: '○';
+  position: absolute;
+  left: 0;
+  font-size: 0.7rem;
+  color: var(--color-border);
 }

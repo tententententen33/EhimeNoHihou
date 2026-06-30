@@ -22,6 +22,7 @@ import { CharacterView } from './ui/views/CharacterView';
 import { ShopView, type PurchaseOutcome } from './ui/views/ShopView';
 import { QuestsView } from './ui/views/QuestsView';
 import { CollectionsView } from './ui/views/CollectionsView';
+import { FriendsView } from './ui/views/FriendsView';
 
 import { LocationService } from './services/locationService';
 import {
@@ -46,6 +47,7 @@ import { enemyDefinitionFromBoss, createBattleItems } from './data/enemyContent'
 import { enemyImageUrl, backgroundImageUrl, soulImageUrl } from './data/bossImages';
 import { bossDisplayScale, bossDisplayOffsetY, bossDisplayOffsetX } from './data/bossDisplay';
 import { loadBattle } from './state/battlePersistence';
+import { InMemoryFriendRepository } from './repository/friendRepository';
 import './ui/styles/App.css';
 
 import {
@@ -132,6 +134,11 @@ export function App() {
   const locationServiceRef = useRef<LocationService | null>(null);
   if (locationServiceRef.current === null) {
     locationServiceRef.current = new LocationService();
+  }
+  // フレンドリポジトリ（インメモリ実装）
+  const friendRepoRef = useRef<InMemoryFriendRepository | null>(null);
+  if (friendRepoRef.current === null) {
+    friendRepoRef.current = new InMemoryFriendRepository();
   }
   // 静的コンテキスト（カタログ群）は不変なのでメモ化する。
   const context = useMemo(() => createGameContext(), []);
@@ -517,6 +524,12 @@ export function App() {
           totalSpots={TOTAL_SPOTS}
           collections={COLLECTIONS}
           titles={TITLES}
+        />
+      ),
+      friends: (
+        <FriendsView
+          currentUserId={PLAYER_ID}
+          repository={friendRepoRef.current!}
         />
       ),
     };
