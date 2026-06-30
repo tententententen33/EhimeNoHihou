@@ -1,12 +1,13 @@
-/* CollectionsView のスタイル（Task 19.5 / Req 3.5, 11.6）。
-   モバイルファースト。進捗バー付きのカード表示で、スタンプ集計・コレクション・称号を縦に並べる。
-   横スクロールを発生させず（Req 12.4）、タッチ操作を阻害しないシンプルな表示とする。 */
+/* ========================================================================
+   CollectionsView - RPGテーマ 図鑑・コレクション
+   ======================================================================== */
 
 .collections {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   max-width: 100%;
+  animation: rpg-fade-in 0.3s ease-out;
 }
 
 .collections-section {
@@ -18,11 +19,19 @@
 .collections-section__title {
   margin: 0;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-/* 一覧（コレクション・称号）の共通リセット */
+/* アイコン装飾 */
+#collections-stamp-heading::before { content: '📮 '; }
+#collections-list-heading::before { content: '📖 '; }
+#collections-title-heading::before { content: '👑 '; }
+
+/* === リスト === */
 .collections-list,
 .collections-titles {
   list-style: none;
@@ -33,17 +42,25 @@
   gap: 0.6rem;
 }
 
-/* スタンプ／各コレクションのカード */
+/* === カード === */
 .collections-card {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.85rem;
-  border: 1px solid var(--color-border, #e0e4ea);
-  border-radius: var(--app-radius, 12px);
-  background: var(--color-surface, #f5f7fa);
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
   max-width: 100%;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  animation: rpg-slide-up 0.3s ease-out;
+  animation-fill-mode: both;
 }
+
+.collections-card:nth-child(1) { animation-delay: 0ms; }
+.collections-card:nth-child(2) { animation-delay: 50ms; }
+.collections-card:nth-child(3) { animation-delay: 100ms; }
 
 .collections-card__head {
   display: flex;
@@ -53,8 +70,7 @@
 }
 
 .collections-card__name {
-  font-weight: 600;
-  /* 長い名称でも横幅を超えないよう省略する（Req 12.4） */
+  font-weight: 700;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -64,69 +80,94 @@
 .collections-card__count {
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
-  color: var(--color-muted, #5a6472);
+  color: var(--color-primary);
   font-size: 0.9rem;
+  font-weight: 700;
 }
 
-/* 進捗バー */
+/* === 進捗バー === */
 .collections-bar {
   width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--color-border, #e0e4ea);
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
   overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .collections-bar {
+    background: rgba(120, 113, 108, 0.3);
+  }
 }
 
 .collections-bar__fill {
   height: 100%;
-  background: var(--color-primary, #1565c0);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
   border-radius: inherit;
-  transition: width 0.3s ease;
+  transition: width 0.4s ease;
 }
 
-/* 完了／未完了の状態表示 */
+/* === 完了/未完了ステータス === */
 .collections-status {
   align-self: flex-start;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background: #eceff3;
-  color: var(--color-muted, #5a6472);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-muted);
 }
 
 .collections-status--complete {
-  background: #e6f4ea;
-  color: #1b7a3d;
+  background: var(--color-primary-surface);
+  color: var(--color-primary-dark);
 }
 
-/* 称号 */
+@media (prefers-color-scheme: dark) {
+  .collections-status--complete {
+    color: var(--color-primary-light);
+  }
+}
+
+/* === 称号 === */
 .collections-title {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--color-border, #e0e4ea);
-  border-radius: var(--app-radius, 12px);
-  background: var(--color-surface, #f5f7fa);
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-sm);
+  animation: rpg-slide-up 0.3s ease-out;
+  animation-fill-mode: both;
 }
 
 .collections-title__name {
-  font-weight: 700;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.collections-title__name::before {
+  content: '🏆';
+  font-size: 0.9em;
 }
 
 .collections-title__desc {
   font-size: 0.8rem;
-  color: var(--color-muted, #5a6472);
+  color: var(--color-muted);
+  line-height: 1.4;
 }
 
-/* 空状態の表示 */
+/* === 空状態 === */
 .collections-empty {
   margin: 0;
-  padding: 0.85rem;
-  border: 1px dashed var(--color-border, #e0e4ea);
-  border-radius: var(--app-radius, 12px);
-  color: var(--color-muted, #5a6472);
+  padding: 1.5rem;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-muted);
   font-size: 0.9rem;
   text-align: center;
 }

@@ -1,72 +1,78 @@
-/* Leaflet 実地図サーフェスのスタイル（LeafletMapSurface.tsx 用）。
-   モバイルファースト。地図は十分な高さを確保し、ドラッグ・ズームできる実地図として機能させる。 */
+/* ========================================================================
+   LeafletMapSurface - RPGテーマ 冒険マップマーカー
+   ======================================================================== */
 
-/* 地図コンテナ。親（全面マップ領域）を埋め尽くす。 */
 .leaflet-surface {
   width: 100%;
-  /* 親が flex 列で高さを与えるため、残り高さいっぱいに広がる */
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
   border: none;
   border-radius: 0;
-  /* 角丸からタイルがはみ出さないようにする */
   overflow: hidden;
-  /* タッチ操作（パン/ズーム）を地図に渡す */
   touch-action: none;
   z-index: 0;
 }
 
-/* スポットマーカー（divIcon の中身）。 */
+/* === スポットマーカー === */
 .leaflet-spot {
   display: flex;
   flex-direction: column;
   align-items: center;
   line-height: 1;
-  /* アイコンの中心を座標に合わせるため transform は iconAnchor 側で調整済み */
   transform: translateY(-2px);
 }
 
 .leaflet-spot__pin {
   font-size: 1.8rem;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  transition: transform var(--transition-fast);
 }
 
-/* 解放済みスポットの名前ラベル。 */
+/* 解放済みスポットの名前ラベル */
 .leaflet-spot__label {
-  margin-top: 1px;
-  padding: 1px 6px;
+  margin-top: 2px;
+  padding: 2px 8px;
   max-width: 120px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #1a1a1a;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-text);
   font-size: 0.7rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
 }
 
-/* ロックスポット: くすませて解放済みと明確に区別する（名前は表示しない）。 */
+@media (prefers-color-scheme: dark) {
+  .leaflet-spot__label {
+    background: rgba(41, 37, 36, 0.95);
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+}
+
+/* ロックスポット */
 .leaflet-spot--locked .leaflet-spot__pin {
-  opacity: 0.7;
-  filter: grayscale(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  opacity: 0.5;
+  filter: grayscale(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
-/* 選択中マーカーの強調。 */
+/* 選択中マーカーの強調 */
 .leaflet-spot--selected .leaflet-spot__pin {
-  transform: scale(1.25);
+  transform: scale(1.3);
+  filter: drop-shadow(0 0 8px var(--color-primary));
 }
 
-/* 現在位置マーカー（Google Map 風の青い点滅ドット）。 */
+/* === 現在位置マーカー === */
 .leaflet-player {
   position: relative;
   width: 22px;
   height: 22px;
 }
 
-/* 中心の青い点（白フチ付き）。 */
 .leaflet-player__dot {
   position: absolute;
   top: 50%;
@@ -74,14 +80,13 @@
   width: 14px;
   height: 14px;
   transform: translate(-50%, -50%);
-  border: 2px solid #fff;
+  border: 2.5px solid #fff;
   border-radius: 50%;
-  background: #1a73e8;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.4);
+  background: var(--color-primary);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
   z-index: 2;
 }
 
-/* 拡散して点滅するリング。 */
 .leaflet-player__pulse {
   position: absolute;
   top: 50%;
@@ -90,7 +95,7 @@
   height: 22px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: rgba(26, 115, 232, 0.45);
+  background: rgba(16, 185, 129, 0.4);
   z-index: 1;
   animation: leaflet-player-pulse 1.8s ease-out infinite;
 }
@@ -100,16 +105,13 @@
     transform: translate(-50%, -50%) scale(0.5);
     opacity: 0.7;
   }
-  70% {
-    opacity: 0;
-  }
+  70% { opacity: 0; }
   100% {
     transform: translate(-50%, -50%) scale(3.2);
     opacity: 0;
   }
 }
 
-/* アニメーションを抑制する設定を尊重する。 */
 @media (prefers-reduced-motion: reduce) {
   .leaflet-player__pulse {
     animation: none;

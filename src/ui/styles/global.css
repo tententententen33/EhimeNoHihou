@@ -1,13 +1,99 @@
-/* モバイルファーストの基盤スタイル */
-/* 詳細なレイアウト・タッチターゲット要件（Req 12.4, 12.5）は Task 18 で実装する。 */
+/* ========================================================================
+   愛媛の秘宝 - RPG テーマ グローバルスタイル
+   ========================================================================
+   テーマ: 現実世界を冒険するRPG
+   カラー: エメラルドグリーン / ゴールド / オレンジ
+   フォント: 読みやすく親しみやすい日本語フォント
+   ======================================================================== */
+
+/* Google Fonts: Noto Sans JP (読みやすく親しみやすい) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  --color-primary: #1565c0;
-  --color-bg: #ffffff;
-  --color-text: #1a1a1a;
+  /* === カラーテーマ === */
+  --color-primary: #10b981;          /* エメラルドグリーン - 自然・冒険 */
+  --color-primary-dark: #059669;
+  --color-primary-light: #34d399;
+  --color-primary-surface: #ecfdf5;
+
+  --color-gold: #f59e0b;             /* ゴールド - コイン・報酬 */
+  --color-gold-dark: #d97706;
+  --color-gold-light: #fbbf24;
+  --color-gold-surface: #fffbeb;
+
+  --color-accent: #f97316;           /* オレンジ - イベント・ボス */
+  --color-accent-dark: #ea580c;
+  --color-accent-light: #fb923c;
+  --color-accent-surface: #fff7ed;
+
+  --color-danger: #ef4444;
+  --color-danger-surface: #fef2f2;
+
+  /* === 背景・テキスト === */
+  --color-bg: #faf8f5;               /* 淡いベージュ */
+  --color-bg-elevated: #ffffff;
+  --color-surface: #f5f2ed;
+  --color-text: #1c1917;
+  --color-text-secondary: #57534e;
+  --color-muted: #78716c;
+  --color-border: #e7e5e4;
+  --color-border-light: #f5f5f4;
+
+  /* === シャドウ === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-button: 0 2px 8px rgba(16, 185, 129, 0.3);
+  --shadow-gold: 0 2px 8px rgba(245, 158, 11, 0.3);
+
+  /* === 角丸 === */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* === サイズ === */
   --touch-target-min: 44px;
+  --app-header-h: 3.5rem;
+  --app-footer-h: 4rem;
+
+  /* === トランジション === */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* === フォント === */
+  --font-family: 'Noto Sans JP', system-ui, -apple-system, 'Hiragino Sans', sans-serif;
 }
 
+/* === ダークモード === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1c1917;
+    --color-bg-elevated: #292524;
+    --color-surface: #292524;
+    --color-text: #fafaf9;
+    --color-text-secondary: #d6d3d1;
+    --color-muted: #a8a29e;
+    --color-border: #44403c;
+    --color-border-light: #292524;
+    --color-primary-surface: #064e3b;
+    --color-gold-surface: #451a03;
+    --color-accent-surface: #431407;
+    --color-danger-surface: #450a0a;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    --shadow-button: 0 2px 8px rgba(16, 185, 129, 0.2);
+    --shadow-gold: 0 2px 8px rgba(245, 158, 11, 0.2);
+  }
+}
+
+/* === リセット === */
 * {
   box-sizing: border-box;
 }
@@ -18,62 +104,175 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  /* ビューポート幅を超える横スクロールを抑止する基盤（Req 12.4） */
   overflow: hidden;
-  /* スマホでページ自体をスクロール／スワイプさせない（端のラバーバンドも抑止） */
   overscroll-behavior: none;
   touch-action: manipulation;
 }
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  font-family: var(--font-family);
+  font-weight: 400;
   background: var(--color-bg);
   color: var(--color-text);
   -webkit-text-size-adjust: 100%;
-  /* iOS でのページ全体スクロールを防ぐ */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   position: fixed;
   inset: 0;
 }
 
 #root {
-  /* 動的ビューポート高（モバイルのアドレスバー増減に追従） */
   height: 100vh;
   height: 100dvh;
 }
 
-/* header / main / footer の3領域レイアウト（Req 12.1） */
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-}
-
-.app-header,
-.app-footer {
-  background: var(--color-primary);
-  color: #fff;
-  padding: 0.75rem 1rem;
-}
-
-.app-header h1 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.app-main {
-  flex: 1 1 auto;
-  padding: 1rem;
-}
-
-.app-footer {
-  text-align: center;
-}
-
-/* インタラクティブ要素の最小タッチターゲット（Req 12.5） */
+/* === インタラクティブ要素の基本スタイル === */
 button,
 a,
 [role='button'] {
   min-width: var(--touch-target-min);
   min-height: var(--touch-target-min);
+}
+
+button {
+  font-family: var(--font-family);
+}
+
+/* === RPG ボタンの共通スタイル === */
+.rpg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rpg-btn--primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  box-shadow: var(--shadow-button);
+}
+
+.rpg-btn--primary:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+.rpg-btn--gold {
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+  color: #fff;
+  box-shadow: var(--shadow-gold);
+}
+
+.rpg-btn--gold:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+.rpg-btn--accent {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  color: #fff;
+}
+
+.rpg-btn--outline {
+  background: var(--color-bg-elevated);
+  border: 2px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.rpg-btn--outline:active {
+  background: var(--color-surface);
+}
+
+.rpg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* === RPGカードの共通スタイル === */
+.rpg-card {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast);
+}
+
+.rpg-card--interactive:active {
+  box-shadow: var(--shadow-md);
+}
+
+/* === アニメーション === */
+@keyframes rpg-bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes rpg-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes rpg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rpg-coin-spin {
+  0% { transform: rotateY(0deg) scale(1); }
+  50% { transform: rotateY(180deg) scale(1.2); }
+  100% { transform: rotateY(360deg) scale(1); }
+}
+
+@keyframes rpg-glow-pulse {
+  0%, 100% { box-shadow: 0 0 5px var(--color-primary); }
+  50% { box-shadow: 0 0 20px var(--color-primary), 0 0 40px var(--color-primary-light); }
+}
+
+@keyframes rpg-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes rpg-stamp-collect {
+  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* アニメーション抑制 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* === スクロールバー === */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
 }
