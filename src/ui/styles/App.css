@@ -1,57 +1,80 @@
-/* App レベルの結線で追加した要素のスタイル（Task 20.1）。
-   レイアウト本体・タッチターゲット（44x44px 以上）は AppLayout.css 側で担保する。 */
+/* ========================================================================
+   App.tsx - RPGテーマ マップオーバーレイ・トースト・開発ツール
+   ======================================================================== */
 
+/* === マップ全面領域 === */
 .app-map-pane {
-  /* main を埋め尽くす全面マップ。ボタン類・詳細は地図に重ねるオーバーレイにする。 */
   position: relative;
   height: 100%;
   width: 100%;
   overflow: hidden;
 }
 
-/* MapView 本体を全面に敷く（サイズはタップ等で変化しない）。 */
 .app-map-pane > .map-view {
   position: absolute;
   inset: 0;
 }
 
-/* 通知バナー（地域アンロック・位置メッセージ）＝地図上部のオーバーレイ */
+/* === 通知バナー（地域アンロック・位置メッセージ） === */
 .app-banner {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
+  top: 12px;
+  left: 12px;
+  right: 12px;
   z-index: 1200;
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
   line-height: 1.4;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
+  animation: rpg-slide-up 0.3s ease-out;
+  backdrop-filter: blur(8px);
 }
 
-/* 位置メッセージはバナーの下に少しずらして重ねる */
 .app-banner--warning {
-  top: 56px;
+  top: 64px;
 }
 
 .app-banner--region {
-  background: #e6f7ed;
-  color: #1b6b3a;
-  border: 1px solid #9fd9b6;
+  background: rgba(236, 253, 245, 0.95);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.app-banner--region::before {
+  content: '🗺️ ';
 }
 
 .app-banner--warning {
-  background: #fdeded;
-  color: #9b2c2c;
-  border: 1px solid #f2b8b5;
+  background: rgba(254, 242, 242, 0.95);
+  color: #991b1b;
+  border: 1px solid #fca5a5;
 }
 
-/* 操作エリア（現在地を確認）＝地図右下のフローティングボタン */
+.app-banner--warning::before {
+  content: '⚠️ ';
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-banner--region {
+    background: rgba(6, 78, 59, 0.95);
+    color: #6ee7b7;
+    border-color: #065f46;
+  }
+  .app-banner--warning {
+    background: rgba(69, 10, 10, 0.95);
+    color: #fca5a5;
+    border-color: #7f1d1d;
+  }
+}
+
+/* === 操作ボタン（現在地を確認）=== */
 .app-actions {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
+  right: 16px;
+  bottom: 16px;
   z-index: 1200;
   display: flex;
   gap: 8px;
@@ -59,22 +82,28 @@
 
 .app-actions__primary {
   min-height: 48px;
-  padding: 10px 18px;
-  font-size: 0.95rem;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #fff;
-  background: #1f7a4d;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   border: none;
-  border-radius: 999px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-button), var(--shadow-lg);
   cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.app-actions__primary::before {
+  content: '📍 ';
 }
 
 .app-actions__primary:active {
-  background: #195f3c;
+  transform: scale(0.95);
+  box-shadow: var(--shadow-sm);
 }
 
-/* 開発ツール（デモ操作）＝地図左下のフローティングパネル。開いても地図サイズは不変。 */
+/* === 開発ツール === */
 .app-devtools {
   position: absolute;
   left: 12px;
@@ -84,91 +113,95 @@
   max-height: 55%;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid #c9c9c9;
-  border-radius: 8px;
-  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.8rem;
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-devtools {
+    background: rgba(41, 37, 36, 0.95);
+  }
 }
 
 .app-devtools > summary {
   cursor: pointer;
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
 }
 
 .app-devtools__group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .app-devtools__label {
   width: 100%;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #444;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
 }
 
 .app-devtools__group button {
-  min-height: 44px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  border: 1px solid #1f7a4d;
-  border-radius: 8px;
-  background: #fff;
-  color: #1f7a4d;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-primary);
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .app-devtools__group button:active {
-  background: #eef7f1;
+  background: var(--color-primary-surface);
+}
+
+.app-devtools__group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--color-border);
+  color: var(--color-muted);
 }
 
 .app-devtools__empty {
   margin: 0;
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.8rem;
+  color: var(--color-muted);
 }
 
-/* 画面上部のトースト通知（レベルアップ・ドロップなど）。
-   どのページにいても見えるよう画面上部に固定表示する。 */
+/* === トースト通知 === */
 .app-toast {
   position: fixed;
-  top: 12px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
-  max-width: 92%;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: rgba(26, 32, 44, 0.92);
+  z-index: 9999;
+  max-width: 90%;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #1c1917, #292524);
   color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   line-height: 1.3;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  animation: app-toast-in 0.2s ease-out;
+  box-shadow: var(--shadow-xl);
+  animation: rpg-bounce-in 0.4s ease-out;
 }
 
-@keyframes app-toast-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -8px);
+@media (prefers-color-scheme: dark) {
+  .app-toast {
+    background: linear-gradient(135deg, #fafaf9, #e7e5e4);
+    color: #1c1917;
   }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-/* 装備ボタン無効時の見た目（中ボス未撃破のボスなど）。 */
-.app-devtools__group button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  border-color: #c9c9c9;
-  color: #999;
 }
