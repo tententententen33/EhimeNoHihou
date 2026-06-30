@@ -228,6 +228,12 @@ export interface Boss {
   bind:
     | { kind: 'spot'; spotId: string }
     | { kind: 'region'; regionId: string };
+  /**
+   * バトル用の戦闘ステータス（任意）。
+   * 設定時は Battle_System（`startBattle`）でボスの戦闘パラメータとして用いる。
+   * 未設定の場合はバトル開始側で既定値（弱めの中ボス相当）にフォールバックする。
+   */
+  stats?: CharacterStats;
   /** 報酬。少なくとも 1 つの Limited_Item を含む（Req 9.1, 9.4） */
   reward: RewardGrant & { limitedItemIds: string[] };
   /**

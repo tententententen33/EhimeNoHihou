@@ -350,7 +350,7 @@ export function regionBossId(regionId: string): string {
   return `boss-${regionId}`;
 }
 
-// 市町ボス（Region 紐付け）。チェーン順が後ろの市町ほど報酬を厚くする。
+// 市町ボス（Region 紐付け）。チェーン順が後ろの市町ほど報酬・強さを厚くする。
 const regionBosses: Boss[] = REGION_CHAIN.map((r, i): Boss => {
   const tier = i + 1;
   return {
@@ -358,6 +358,13 @@ const regionBosses: Boss[] = REGION_CHAIN.map((r, i): Boss => {
     name: REGION_BOSS_NAME[r.id] ?? `${r.name}のボス`,
     kind: 'boss',
     bind: { kind: 'region', regionId: r.id },
+    // 市町ボスは中ボスより明確に強い。tier に応じてスケールする。
+    stats: {
+      hp: 220 + tier * 70,
+      attack: 22 + tier * 4,
+      defense: 12 + tier * 3,
+      speed: 8 + tier,
+    },
     reward: {
       coins: 100 + tier * 40,
       experience: 250 + tier * 80,
@@ -368,20 +375,31 @@ const regionBosses: Boss[] = REGION_CHAIN.map((r, i): Boss => {
 });
 
 // 中ボス（各スポット紐付け）。確率で記念品をドロップする。
-const midBosses: Boss[] = SPOTS.map((spot): Boss => ({
-  id: `midboss-${spot.id}`,
-  name: `${spot.name}の主`,
-  kind: 'midBoss',
-  bind: { kind: 'spot', spotId: spot.id },
-  reward: {
-    coins: 25,
-    experience: 60,
-    items: [],
-    limitedItemIds: [],
-  },
-  // 45% でそのスポット固有の記念品をドロップ。
-  dropTable: [{ itemId: `trophy-${spot.id}`, probability: 0.45 }],
-}));
+const midBosses: Boss[] = SPOTS.map((spot): Boss => {
+  // スポットの所属市町の tier を強さの目安にする（後半市町の中ボスほど強い）。
+  const tier = Math.max(1, UNLOCK_ORDER.indexOf(spot.regionId) + 1);
+  return {
+    id: `midboss-${spot.id}`,
+    name: `${spot.name}の主`,
+    kind: 'midBoss',
+    bind: { kind: 'spot', spotId: spot.id },
+    // 中ボスは控えめ。序盤は倒しやすく、後半市町でやや手応えが出る。
+    stats: {
+      hp: 80 + tier * 22,
+      attack: 12 + tier * 3,
+      defense: 6 + tier * 2,
+      speed: 6 + tier,
+    },
+    reward: {
+      coins: 25,
+      experience: 60,
+      items: [],
+      limitedItemIds: [],
+    },
+    // 45% でそのスポット固有の記念品をドロップ。
+    dropTable: [{ itemId: `trophy-${spot.id}`, probability: 0.45 }],
+  };
+});
 
 export const REGION_BOSSES: Boss[] = regionBosses;
 export const MID_BOSSES: Boss[] = midBosses;

@@ -205,3 +205,27 @@
     color: #1c1917;
   }
 }
+
+/* 装備ボタン無効時の見た目（中ボス未撃破のボスなど）。 */
+.app-devtools__group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #c9c9c9;
+  color: #999;
+}
+
+/* バトル難易度セレクタ（開発ツール内） */
+.app-devtools__difficulty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.app-devtools__diff--active {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}

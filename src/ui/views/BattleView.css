@@ -1,0 +1,605 @@
+/* アンダーテイル風バトル UI。
+   緑グリッド背景 + 敵スプライト + 白枠ボックス + 黄色HP + オレンジコマンド。 */
+
+.ut-battle {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 白い戦闘ボックス以外の黒背景は半透明にして、後ろのアプリ画面（マップ等）を
+     うっすら透けさせる。濃さは alpha で調整可能（0=完全透過, 1=真っ黒）。 */
+  background: rgba(0, 0, 0, 0.6);
+  overscroll-behavior: contain;
+  font-family: 'Courier New', 'DotGothic16', monospace;
+}
+
+.ut-battle__stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  height: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem;
+  color: #fff;
+}
+
+/* PAUSE ボタン（右上） */
+.ut-battle__pause-btn {
+  position: absolute;
+  z-index: 5;
+  top: 8px;
+  right: 8px;
+  min-height: 36px;
+  padding: 0.3rem 0.7rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ut-battle__pause-btn:active {
+  background: #fff;
+  color: #000;
+}
+
+/* 一時停止オーバーレイ */
+.ut-battle__pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.ut-battle__pause-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ffe34d;
+}
+
+.ut-battle__pause-overlay .ut-cmd {
+  min-width: 160px;
+}
+
+/* 敵エリア（背景レイヤー + 敵レイヤーを重ねる） */
+.ut-battle__enemy-area {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 240px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+/* 背景（1枚画像。エリア全体を覆う） */
+.ut-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: pixelated;
+}
+
+/* 背景フォールバック: 緑グリッド */
+.ut-grid {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  background-image:
+    linear-gradient(#1f8f1f 1px, transparent 1px),
+    linear-gradient(90deg, #1f8f1f 1px, transparent 1px);
+  background-size: 84px 84px;
+  background-position: center;
+}
+
+/* 敵レイヤー（外側=一時演出 shake/lunge、内側=待機アニメ） */
+.ut-enemy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 8px 4px 0;
+}
+
+.ut-enemy__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 待機モーション: ゆっくり上下＋呼吸（拡大縮小） */
+  animation: ut-idle 2.6s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* ボーンリグ使用時はコンテナ側のアニメは付けない（リグが動かす） */
+.ut-enemy--rig {
+  align-items: flex-end;
+}
+
+.ut-enemy__img {
+  max-height: 220px;
+  max-width: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+}
+
+.ut-enemy__emoji {
+  font-size: 4rem;
+  line-height: 1;
+  filter: grayscale(1) brightness(2);
+}
+
+/* 待機（呼吸） */
+@keyframes ut-idle {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.02);
+  }
+}
+
+/* 被弾（震え） */
+.ut-enemy--shake {
+  animation: ut-shake 0.36s linear;
+}
+
+@keyframes ut-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-5px, 0); }
+  40% { transform: translate(5px, 0); }
+  60% { transform: translate(-4px, 0); }
+  80% { transform: translate(4px, 0); }
+}
+
+/* 攻撃（前進して戻る） */
+.ut-enemy--lunge {
+  animation: ut-lunge 0.36s ease-out;
+}
+
+@keyframes ut-lunge {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(14px) scale(1.06); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* 敵情報（名前＋ふりがな＋HPバー）。イラスト左上にオーバーレイ */
+.ut-enemy-info {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: calc(100% - 20px);
+}
+
+.ut-enemy-info__name {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ふりがな（文字の上に小さく） */
+.ut-enemy-info__name ruby {
+  ruby-position: over;
+  -webkit-ruby-position: before;
+}
+
+.ut-enemy-info__name rt {
+  font-size: 0.5em;
+  font-weight: 600;
+  color: #ffe34d;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* 敵HPバー（名前のちょい下） */
+.ut-enemy-info__hp {
+  width: 160px;
+  max-width: 60vw;
+  height: 12px;
+  background: #4a0000;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ut-enemy-info__hp-fill {
+  height: 100%;
+  background: #ff3b3b;
+  transition: width 0.18s linear;
+}
+
+/* 中央ボックス（白枠） */
+.ut-battle__box {
+  position: relative;
+  flex: 0 0 auto;
+  background: #000;
+  border: 3px solid #fff;
+  overflow: hidden;
+}
+
+/* 避けフェーズのアリーナ層（ボックス全体を覆う。弾・ソウルの基準枠） */
+.ut-arena {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* メッセージ表示 */
+.ut-msg {
+  padding: 0.6rem 0.7rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #fff;
+}
+
+.ut-msg__line {
+  margin: 0 0 0.25rem;
+}
+
+.ut-msg__result {
+  margin: 0.4rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffd400;
+}
+
+/* クイズ表示（こうげき時に中央ボックスへ）。ボックスは固定サイズのまま。 */
+.ut-quiz {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.5rem 0.6rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* 制限時間カウントダウン（ボックス右上に重ねる。ボックスを押し広げない） */
+.ut-quiz__timer {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffe34d;
+  transition: color 0.2s ease;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+.ut-quiz__timer--danger {
+  color: #ff3b3b;
+  animation: ut-quiz-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes ut-quiz-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+/* コマンド領域に出す「もどる」行（全幅） */
+.ut-backrow {
+  width: 100%;
+}
+
+.ut-cmd--wide {
+  width: 100%;
+}
+
+.ut-quiz__q {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #fff;
+  padding-right: 2.2rem;
+}
+
+.ut-quiz__choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.ut-quiz__choice {
+  min-height: 40px;
+  padding: 0.35rem 0.5rem;
+  background: #000;
+  color: #ffe34d;
+  border: 2px solid #ffe34d;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ut-quiz__choice:active {
+  background: #ffe34d;
+  color: #000;
+}
+
+/* 回答結果の演出 */
+.ut-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  animation: ut-feedback-pop 0.25s ease-out;
+}
+
+.ut-feedback--correct {
+  color: #6dff8c;
+  text-shadow: 0 0 8px rgba(109, 255, 140, 0.6);
+}
+
+.ut-feedback--wrong {
+  color: #ff6b6b;
+  text-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
+}
+
+@keyframes ut-feedback-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* プレイヤー（ハート＝自分のキャラ） */
+.ut-soul {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ut-soul__svg,
+.ut-soul__img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+/* 人物キャラ画像のときは見た目だけ拡大（当たり判定=16pxは変えない）。
+   中心を軸に拡大するので、ヒットボックスはキャラの中心に保たれる。 */
+.ut-soul__img {
+  transform: scale(2.4);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+/* 敵弾 */
+.ut-bullet {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #000;
+}
+
+.ut-bullet--square {
+  border-radius: 2px;
+}
+
+.ut-bullet--diamond {
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+/* 三角弾（羽根など）。背景は使わず CSS 三角形で表現する。 */
+.ut-bullet--triangle {
+  background: transparent !important;
+  border-radius: 0;
+  box-shadow: none;
+  width: 0 !important;
+  height: 0 !important;
+  border-left: var(--ut-tri-half, 6px) solid transparent;
+  border-right: var(--ut-tri-half, 6px) solid transparent;
+  border-bottom: var(--ut-tri-h, 12px) solid #fff;
+  filter: drop-shadow(0 0 1px #000);
+}
+
+/* 追尾弾は色で区別（オレンジ） */
+.ut-bullet--homing {
+  background: #ff9d3c;
+  box-shadow: 0 0 6px rgba(255, 157, 60, 0.9), 0 0 0 1px #000;
+}
+
+/* 画像弾: 背景・影を消して画像だけ表示。見た目は当たり判定より少し大きく。 */
+.ut-bullet--sprite {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.ut-bullet__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transform: scale(1.8);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+/* リング弾（衝撃波）: 中心固定で半径が広がる。SVG で弧を描く。 */
+.ut-bullet--ring {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 50%;
+}
+
+.ut-ring-svg {
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+  overflow: visible;
+}
+
+.ut-telegraph {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffd400;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-shadow: 0 0 4px #000;
+}
+
+/* ステータス行（LV / HP） */
+.ut-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  flex: 0 0 auto;
+}
+
+.ut-status__lv {
+  color: #fff;
+}
+
+.ut-status__hp-label {
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.ut-status__hp-bar {
+  width: 84px;
+  height: 18px;
+  background: #7a0000;
+  border: 1px solid #fff;
+  overflow: hidden;
+}
+
+.ut-status__hp-fill {
+  height: 100%;
+  background: #ffd400;
+  transition: width 0.15s linear;
+}
+
+.ut-status__hp-num {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* コマンド領域 */
+.ut-controls {
+  width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.3rem;
+}
+
+.ut-cmdrow,
+.ut-submenu {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (min-width: 560px) {
+  .ut-cmdrow {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ut-cmd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 52px;
+  padding: 0.45rem 0.6rem;
+  background: #000;
+  color: #ff9d17;
+  border: 3px solid #ff9d17;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1.02rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ut-cmd__ic {
+  font-size: 0.95em;
+}
+
+.ut-cmd:active {
+  background: #ff9d17;
+  color: #000;
+}
+
+.ut-cmd:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ut-cmd--back {
+  color: #9aa4b2;
+  border-color: #9aa4b2;
+}
+
+.ut-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  text-align: center;
+  color: #9aa4b2;
+}

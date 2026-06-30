@@ -38,8 +38,15 @@ import {
   type SessionStore,
   type StoreNotification,
 } from './state/store';
-import type { ItemCatalog, PlayerState } from './domain/types';
+import type { Boss, ItemCatalog, PlayerState } from './domain/types';
 import { isAvailable } from './domain/boss';
+import { totalStats, levelForExperience } from './domain/character';
+import type { BattleState, DifficultyId } from './domain/battle';
+import { BattleView } from './ui/views/BattleView';
+import { enemyDefinitionFromBoss, createBattleItems } from './data/enemyContent';
+import { enemyImageUrl, backgroundImageUrl, soulImageUrl } from './data/bossImages';
+import { bossDisplayScale, bossDisplayOffsetY, bossDisplayOffsetX } from './data/bossDisplay';
+import { loadBattle } from './state/battlePersistence';
 import { InMemoryFriendRepository } from './repository/friendRepository';
 import './ui/styles/App.css';
 
@@ -112,6 +119,12 @@ export function App() {
   const [regionBanner, setRegionBanner] = useState<string | null>(null);
   // 画面上部に出すトースト通知（レベルアップ・ドロップなど）。
   const [toast, setToast] = useState<string | null>(null);
+  // 現在挑戦中のボス（バトル画面を表示する対象）。null ならバトル非表示。
+  const [activeBoss, setActiveBoss] = useState<Boss | null>(null);
+  // バトル難易度（プレイヤーが選択。既定は normal）。
+  const [difficulty, setDifficulty] = useState<DifficultyId>('normal');
+  // 復元する進行中バトル状態（アプリ再開時。null なら新規開始）。
+  const [battleResume, setBattleResume] = useState<BattleState | null>(null);
 
   // 副作用を持つインフラは生成を 1 回に固定する（再レンダーで作り直さない）。
   const dataStoreRef = useRef<UserDataStore | null>(null);
@@ -195,6 +208,17 @@ export function App() {
 
     setPlayer(store.getState());
     setLoadStatus('ready');
+
+    // 進行中バトルがあれば復元し、ポーズ状態でバトル画面を開く。
+    const saved = loadBattle();
+    if (saved) {
+      const boss = BOSSES.find((b) => b.id === saved.bossId);
+      if (boss) {
+        setDifficulty(saved.difficulty);
+        setBattleResume(saved.state);
+        setActiveBoss(boss);
+      }
+    }
   }, [context, handleNotification]);
 
   // 起動時に 1 回だけ読み込む。
@@ -267,6 +291,22 @@ export function App() {
     await store.tryUnlockNextRegion();
     await store.evaluateTitles();
     setPlayer(store.getState());
+  }, []);
+
+  /** バトル勝利時: バトル画面を閉じてから報酬付与・撃破記録を行う。 */
+  const handleBattleWin = useCallback(async () => {
+    const boss = activeBoss;
+    setActiveBoss(null);
+    setBattleResume(null);
+    if (boss) {
+      await defeatBoss(boss.id);
+    }
+  }, [activeBoss, defeatBoss]);
+
+  /** バトル中断・敗北・逃走時: 状態を変えずにバトル画面を閉じる（resolveLossOrAbandon 相当）。 */
+  const handleBattleClose = useCallback((_outcome: 'lose' | 'fled') => {
+    setActiveBoss(null);
+    setBattleResume(null);
   }, []);
 
   /** 装備変更（Req 8.3）。ドメイン検証 → 永続化 → 状態反映。 */
@@ -409,6 +449,20 @@ export function App() {
           </div>
           <div className="app-devtools__group">
             <span className="app-devtools__label">ボスバトル</span>
+            <div className="app-devtools__difficulty">
+              <span>難易度：</span>
+              {(['easy', 'normal', 'hard'] as DifficultyId[]).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={difficulty === d}
+                  className={difficulty === d ? 'app-devtools__diff--active' : undefined}
+                  onClick={() => setDifficulty(d)}
+                >
+                  {d === 'easy' ? 'かんたん' : d === 'normal' ? 'ふつう' : 'むずかしい'}
+                </button>
+              ))}
+            </div>
             {availableBosses.length === 0 ? (
               <p className="app-devtools__empty">挑戦できるボスはいません。</p>
             ) : (
@@ -420,11 +474,11 @@ export function App() {
                     type="button"
                     disabled={locked}
                     title={locked ? '市内の中ボスを全て倒すと解禁されます' : undefined}
-                    onClick={() => void defeatBoss(boss.id)}
+                    onClick={() => setActiveBoss(boss)}
                   >
                     {boss.kind === 'midBoss' ? '【中ボス】' : '【ボス】'}
                     {boss.name ?? boss.id}
-                    {locked ? '（中ボス全撃破で解禁）' : ' に勝利'}
+                    {locked ? '（中ボス全撃破で解禁）' : ' とバトル'}
                   </button>
                 );
               })
@@ -486,6 +540,7 @@ export function App() {
     levelUp,
     locationMessage,
     regionBanner,
+    difficulty,
     checkLocation,
     enterSpot,
     walk,
@@ -503,6 +558,27 @@ export function App() {
         </div>
       )}
       <AppLayout loadStatus={loadStatus} onRetry={() => void initialize()} views={views} />
+      {activeBoss !== null && player !== null && (
+        <BattleView
+          key={activeBoss.id}
+          enemyDef={enemyDefinitionFromBoss(activeBoss)}
+          playerStats={totalStats(player, ITEM_CATALOG)}
+          playerLevel={levelForExperience(player.experience)}
+          difficulty={difficulty}
+          items={createBattleItems()}
+          enemySpriteUrl={enemyImageUrl(activeBoss.id)}
+          enemyScale={bossDisplayScale(activeBoss.id)}
+          enemyOffsetY={bossDisplayOffsetY(activeBoss.id)}
+          enemyOffsetX={bossDisplayOffsetX(activeBoss.id)}
+          backgroundUrl={backgroundImageUrl(activeBoss.id)}
+          soulSpriteUrl={soulImageUrl()}
+          soulSpriteByFacing={soulImageUrl}
+          initialState={battleResume ?? undefined}
+          startPaused={battleResume !== null}
+          onWin={() => void handleBattleWin()}
+          onClose={handleBattleClose}
+        />
+      )}
     </>
   );
 }

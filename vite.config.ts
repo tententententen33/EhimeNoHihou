@@ -10,6 +10,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    watch: {
+      // バトル用の画像（public/battle 配下）はHMR不要。Windows で大きな画像が
+      // ロックされると watcher が EBUSY でクラッシュするため監視対象から除外する。
+      ignored: ['**/public/battle/**'],
+    },
   },
   build: {
     target: 'es2020',
