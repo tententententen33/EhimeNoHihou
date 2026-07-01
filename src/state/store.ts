@@ -62,6 +62,16 @@ import {
 } from './persistenceController';
 
 // ---------------------------------------------------------------------------
+// 定数
+// ---------------------------------------------------------------------------
+
+/**
+ * 100m 歩行ごとに得られる経験値（「普通の経験値の上がり方」の基準）。
+ * 札所（お遍路）の参拝報酬は、この 20〜30 倍の経験値を与える設計。
+ */
+export const WALK_EXP_PER_100M = 10;
+
+// ---------------------------------------------------------------------------
 // 通知（subscribe で購読する）
 // ---------------------------------------------------------------------------
 
@@ -425,9 +435,14 @@ export class SessionStore {
       addedMeters
     );
 
+    // 歩行でも経験値が少し入る（100m ごとに WALK_EXP_PER_100M）。
+    // これが「普通の経験値の上がり方（100m 歩行）」の基準となる。
+    const walkExp = coinsGranted * WALK_EXP_PER_100M;
+
     const next: PlayerState = {
       ...before,
       coins: before.coins + coinsGranted,
+      experience: before.experience + walkExp,
       pendingWalkMeters: carryOverMeters,
     };
 
