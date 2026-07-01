@@ -48,6 +48,8 @@ export interface SurfaceMarker {
    * ロックスポットには設定しない（名前を秘匿するため, Req 2.3）。
    */
   label?: string;
+  /** 札所（お遍路）マーカーか。ピンの意匠を変える（控えめな星）。 */
+  henro?: boolean;
 }
 
 // 地図描画面（Map SDK 抽象）に渡すプロップ。実 SDK ラッパもこの契約を満たせばよい。
@@ -138,17 +140,22 @@ export function MapView({
 
   // 描画面へ渡すマーカー集合（解放済み＋ロック）。
   const surfaceMarkers = useMemo<SurfaceMarker[]>(() => {
-    // スポット id → 名前の参照（解放済みマーカーのラベル表示に使用）。
-    const nameById = new Map(spots.map((s) => [s.id, s.name]));
-    const unlocked: SurfaceMarker[] = unlockedMarkers.map((m) => ({
-      spotId: m.spotId,
-      lat: m.position.lat,
-      lng: m.position.lng,
-      locked: false,
-      selected: m.spotId === selectedSpotId,
-      // 解放済みスポットは名前を表示してよい（Req 2.4）。
-      label: nameById.get(m.spotId),
-    }));
+    // スポット id → 定義の参照（名前・種別の表示に使用）。
+    const spotById = new Map(spots.map((s) => [s.id, s]));
+    const unlocked: SurfaceMarker[] = unlockedMarkers.map((m) => {
+      const spot = spotById.get(m.spotId);
+      const isHenro = spot?.category === 'henro';
+      return {
+        spotId: m.spotId,
+        lat: m.position.lat,
+        lng: m.position.lng,
+        locked: false,
+        selected: m.spotId === selectedSpotId,
+        // 札所は控えめにするため名前ラベルを出さない。観光スポットは名前を表示（Req 2.4）。
+        label: isHenro ? undefined : spot?.name,
+        henro: isHenro,
+      };
+    });
     return [...unlocked, ...lockedMarkers];
   }, [unlockedMarkers, lockedMarkers, selectedSpotId, spots]);
 

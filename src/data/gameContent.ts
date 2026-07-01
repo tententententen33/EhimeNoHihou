@@ -236,7 +236,9 @@ const HENRO_SPOTS: Spot[] = HENRO_ROWS.map(
     center: { lat, lng },
     entryRadiusMeters: VISIT_RADIUS_METERS,
     regionId,
-    // 参拝報酬: 大きな経験値＋コイン＋記念品（アクセサリ）。中ボスは設置しない。
+    category: 'henro',
+    // 参拝報酬（経験値・コイン）は巡った札所数に応じて段階的に増える（store 側で計算）。
+    // items（記念品）は確実に獲得できる。base の値は store の計算が無い場合のフォールバック。
     firstVisitReward: {
       coins: HENRO_VISIT_COINS,
       experience: HENRO_VISIT_EXP,

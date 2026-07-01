@@ -33,6 +33,7 @@ import type {
   PlayerState,
   QuestProgress,
   Region,
+  RewardGrant,
   Spot,
   TitleDefinition,
 } from '../domain/types';
@@ -67,9 +68,21 @@ import {
 
 /**
  * 100m 歩行ごとに得られる経験値（「普通の経験値の上がり方」の基準）。
- * 札所（お遍路）の参拝報酬は、この 20〜30 倍の経験値を与える設計。
+ * 札所（お遍路）の参拝報酬は、この 20〜30 倍前後の経験値を与える設計。
  */
 export const WALK_EXP_PER_100M = 10;
+
+/**
+ * 札所（お遍路）参拝報酬の段階スケール。
+ * すでに巡った札所数 n に応じて、経験値・コインが「巡るほどバランスよく」増える。
+ * - 経験値: HENRO_BASE_EXP + n * HENRO_STEP_EXP（1件目=200[20倍] … 徐々に増加）
+ * - コイン: HENRO_BASE_COIN + n * HENRO_STEP_COIN
+ * 線形（緩やかな増加）にしてインフレを抑える。
+ */
+export const HENRO_BASE_EXP = 200;
+export const HENRO_STEP_EXP = 20;
+export const HENRO_BASE_COIN = 50;
+export const HENRO_STEP_COIN = 10;
 
 // ---------------------------------------------------------------------------
 // 通知（subscribe で購読する）
@@ -406,13 +419,38 @@ export class SessionStore {
     // 初回訪問報酬（Req 5.3）。スポット定義が存在する場合に付与する。
     const spot = this.spotsById.get(spotId);
     if (spot) {
-      next = applyReward(next, spot.firstVisitReward);
+      next = applyReward(next, this.computeVisitReward(spot, before));
     }
 
     // クエスト進行・完了報酬（Req 4.2, 4.3, 4.5）。
     next = this.advanceQuests(next, spotId);
 
     return this.commitRollback(before, next);
+  }
+
+  /**
+   * スポット訪問時に付与する報酬を計算する。
+   *
+   * - 札所（category==='henro'）: すでに巡った札所数に応じて経験値・コインが
+   *   段階的に増える（巡るほどバランスよく増加）。記念品（items）は据え置き。
+   * - それ以外の観光スポット: 定義された固定の初回訪問報酬。
+   *
+   * @param spot 対象スポット。
+   * @param before 訪問確定前の状態（巡礼済み札所数の基準）。
+   */
+  private computeVisitReward(spot: Spot, before: PlayerState): RewardGrant {
+    if (spot.category !== 'henro') {
+      return spot.firstVisitReward;
+    }
+    // すでにスタンプ済みの札所数（category==='henro' のスポット）を数える。
+    const visitedHenro = before.stamps.filter(
+      (st) => this.spotsById.get(st.spotId)?.category === 'henro'
+    ).length;
+    return {
+      coins: HENRO_BASE_COIN + visitedHenro * HENRO_STEP_COIN,
+      experience: HENRO_BASE_EXP + visitedHenro * HENRO_STEP_EXP,
+      items: spot.firstVisitReward.items,
+    };
   }
 
   // -------------------------------------------------------------------------

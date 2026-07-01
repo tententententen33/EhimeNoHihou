@@ -118,3 +118,23 @@
     opacity: 0.4;
   }
 }
+
+/* 札所（お遍路）: 控えめな星。通常ピン(📍 1.8rem)より小さく、落ち着いた藍色。
+   薄すぎず目立ちすぎない中間のトーンにする。 */
+.leaflet-spot__pin--henro {
+  font-size: 1.2rem;
+  /* 地図のベージュ背景と明確に区別できるティール（青緑）。派手すぎない濃いめの色。 */
+  color: #00838f;
+  /* 白フチを少し強めにして視認性を確保する。 */
+  text-shadow:
+    0 0 3px #fff,
+    0 0 2px #fff,
+    0 1px 1px rgba(0, 0, 0, 0.4);
+  filter: none;
+}
+
+/* 選択中の札所マーカーは少しだけ強調（拡大しすぎない）。 */
+.leaflet-spot--henro.leaflet-spot--selected .leaflet-spot__pin--henro {
+  transform: scale(1.2);
+  color: #006064;
+}
