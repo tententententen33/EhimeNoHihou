@@ -1,0 +1,354 @@
+/* ========================================================================
+   HomeView - RPG冒険拠点メニュー
+   ======================================================================== */
+
+.home-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: rpg-fade-in 0.3s ease-out;
+}
+
+/* === キャラクターカード === */
+.home-character-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, var(--color-bg-elevated), var(--color-primary-surface));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  animation: rpg-slide-up 0.4s ease-out;
+}
+
+.home-character-card__avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #065f46, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.home-character-card__avatar-icon {
+  font-size: 2rem;
+}
+
+.home-character-card__level-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-full);
+  background: var(--color-gold);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+
+.home-character-card__info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.home-character-card__name {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.home-character-card__title {
+  font-size: 0.75rem;
+  color: var(--color-gold-dark);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .home-character-card__title {
+    color: var(--color-gold-light);
+  }
+}
+
+.home-character-card__weapon {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+.home-character-card__coins {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--color-gold-surface);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.home-character-card__coin-icon {
+  font-size: 1.1rem;
+}
+
+.home-character-card__coin-value {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--color-gold-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  .home-character-card__coin-value {
+    color: var(--color-gold-light);
+  }
+}
+
+/* === 経験値バー === */
+.home-exp {
+  padding: 0.85rem 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-exp__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.home-exp__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.home-exp__value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.home-exp__bar {
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .home-exp__bar {
+    background: rgba(120, 113, 108, 0.3);
+  }
+}
+
+.home-exp__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  border-radius: inherit;
+  transition: width 0.6s ease;
+}
+
+/* === ステータスグリッド === */
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.home-stats__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.85rem 0.4rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  animation: rpg-slide-up 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+.home-stats__item:nth-child(1) { animation-delay: 50ms; }
+.home-stats__item:nth-child(2) { animation-delay: 100ms; }
+.home-stats__item:nth-child(3) { animation-delay: 150ms; }
+.home-stats__item:nth-child(4) { animation-delay: 200ms; }
+
+.home-stats__icon {
+  font-size: 1.3rem;
+}
+
+.home-stats__value {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--color-text);
+}
+
+.home-stats__label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+/* === 現在のクエスト === */
+.home-quest {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.home-quest__heading {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.home-quest__card {
+  padding: 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.home-quest__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.home-quest__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.home-quest__count {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.home-quest__bar {
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .home-quest__bar {
+    background: rgba(120, 113, 108, 0.3);
+  }
+}
+
+.home-quest__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+/* === 次のおすすめスポット === */
+.home-next-spot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.home-next-spot__heading {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.home-next-spot__card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-next-spot__icon {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: var(--color-primary-surface);
+  border-radius: var(--radius-md);
+}
+
+.home-next-spot__info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.home-next-spot__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-next-spot__reward {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+/* === 冒険のヒント === */
+.home-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: var(--color-gold-surface);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius-lg);
+}
+
+.home-tip__icon {
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.home-tip__text {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* === レスポンシブ === */
+@media (max-width: 360px) {
+  .home-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

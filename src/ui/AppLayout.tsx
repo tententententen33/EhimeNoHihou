@@ -8,7 +8,7 @@ import { useState } from 'react';
 import './styles/AppLayout.css';
 
 // ナビゲーション先のビューを識別するキー（Req 12.2）。
-export type NavKey = 'map' | 'character' | 'shop' | 'quests' | 'collections' | 'friends';
+export type NavKey = 'home' | 'map' | 'character' | 'shop' | 'quests' | 'collections' | 'friends';
 
 // 初期データ取得状態（Req 12.6, 12.7, 12.8）。
 // - 'loading': User_Data_Store からの取得中（ローディング表示）
@@ -26,22 +26,23 @@ export interface AppLayoutProps {
   onRetry?: () => void;
   // 各ビューの描画内容（Task 19 から差し込む）。
   views?: ViewRegistry;
-  // 初期表示ビュー。既定は 'map'。
+  // 初期表示ビュー。既定は 'home'。
   initialView?: NavKey;
 }
 
 // メニュー項目の定義（表示順・ラベルは日本語、RPG風アイコン）。
 const NAV_ITEMS: ReadonlyArray<{ key: NavKey; label: string; icon: string }> = [
+  { key: 'home', label: 'ホーム', icon: '🏠' },
   { key: 'map', label: 'マップ', icon: '🧭' },
-  { key: 'friends', label: 'フレンド', icon: '👥' },
   { key: 'quests', label: 'クエスト', icon: '📜' },
   { key: 'shop', label: 'ショップ', icon: '🏪' },
-  { key: 'collections', label: '図鑑', icon: '📖' },
+  { key: 'friends', label: 'フレンド', icon: '👥' },
   { key: 'character', label: 'マイページ', icon: '⚔️' },
 ];
 
 // NavKey からメニュー定義を引くためのラベル参照。
 const NAV_LABEL: Record<NavKey, string> = {
+  home: 'ホーム',
   map: 'マップ',
   friends: 'フレンド',
   character: 'マイページ',
@@ -54,7 +55,7 @@ export function AppLayout({
   loadStatus = 'ready',
   onRetry,
   views,
-  initialView = 'map',
+  initialView = 'home',
 }: AppLayoutProps) {
   // 現在アクティブなビュー。メニュー選択で切り替える（Req 12.3）。
   const [activeView, setActiveView] = useState<NavKey>(initialView);

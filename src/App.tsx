@@ -23,6 +23,7 @@ import { ShopView, type PurchaseOutcome } from './ui/views/ShopView';
 import { QuestsView } from './ui/views/QuestsView';
 import { CollectionsView } from './ui/views/CollectionsView';
 import { FriendsView } from './ui/views/FriendsView';
+import { HomeView } from './ui/views/HomeView';
 
 import { LocationService } from './services/locationService';
 import {
@@ -497,6 +498,15 @@ export function App() {
     );
 
     return {
+      home: (
+        <HomeView
+          player={player}
+          itemCatalog={ITEM_CATALOG}
+          spots={SPOTS}
+          activeQuests={player.quests.filter((q) => !q.complete)}
+          todayWalkMeters={player.pendingWalkMeters}
+        />
+      ),
       map: mapNode,
       character: (
         <CharacterView
@@ -506,6 +516,14 @@ export function App() {
           onUnequip={(slot) => void handleUnequip(slot)}
           levelUp={levelUp}
           onDismissLevelUp={() => setLevelUp(null)}
+          collectionsView={
+            <CollectionsView
+              player={player}
+              totalSpots={TOTAL_SPOTS}
+              collections={COLLECTIONS}
+              titles={TITLES}
+            />
+          }
         />
       ),
       shop: (

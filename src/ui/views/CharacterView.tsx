@@ -10,6 +10,7 @@
 //   - スロット別の所持装備グルーピング・空状態・装備変更 UI（Req 8.1, 8.2, 8.3）
 //   - 有効装備から合成したキャラクターステータス（Req 8.7, 8.8）
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { EquipmentSlot, ItemCatalog, PlayerState } from '../../domain/types';
 import {
   computeStats,
@@ -55,6 +56,8 @@ export interface CharacterViewProps {
   levelUp?: { newLevel: number } | null;
   // レベルアップ通知の解除ハンドラ（明示的解除, Req 6.3）。
   onDismissLevelUp?: () => void;
+  // 図鑑ビュー（マイページ内サブページとして表示）
+  collectionsView?: ReactNode;
 }
 
 export function CharacterView({
@@ -64,6 +67,7 @@ export function CharacterView({
   onUnequip,
   levelUp = null,
   onDismissLevelUp,
+  collectionsView,
 }: CharacterViewProps) {
   // ドメイン純粋関数から表示情報を導出する（再計算は描画時に都度行う）。
   const progress = getProgressDisplay(player);
@@ -76,8 +80,8 @@ export function CharacterView({
 
   // レベルアップ通知を最低3秒は解除できないようにするためのフラグ（Req 6.3）。
   const [canDismiss, setCanDismiss] = useState(false);
-  // キャラページ内のサブページ切り替え（ステータス / 装備）。
-  const [tab, setTab] = useState<'status' | 'equip'>('status');
+  // キャラページ内のサブページ切り替え（ステータス / 装備 / 図鑑）。
+  const [tab, setTab] = useState<'status' | 'equip' | 'collections'>('status');
   // 装備サブページで選択中のスロット（武器 / 防具 / アクセサリ）。
   const [equipSlot, setEquipSlot] = useState<EquipmentSlot>('weapon');
 
@@ -170,6 +174,17 @@ export function CharacterView({
         >
           装備
         </button>
+        {collectionsView && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'collections'}
+            className={`character-tab${tab === 'collections' ? ' character-tab--active' : ''}`}
+            onClick={() => setTab('collections')}
+          >
+            図鑑
+          </button>
+        )}
       </div>
 
       {/* ステータスサブページ（合成ステータス, Req 8.7, 8.8） */}
@@ -286,6 +301,9 @@ export function CharacterView({
           })()}
         </div>
       )}
+
+      {/* 図鑑サブページ */}
+      {tab === 'collections' && collectionsView}
     </section>
   );
 }
