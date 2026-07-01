@@ -45,6 +45,9 @@ export const REGION_OZU = 'region-ozu';
 export const REGION_SAIJO = 'region-saijo';
 export const REGION_NIIHAMA = 'region-niihama';
 export const REGION_UWAJIMA = 'region-uwajima';
+export const REGION_AINAN = 'region-ainan';
+export const REGION_SEIYO = 'region-seiyo';
+export const REGION_SHIKOKUCHUO = 'region-shikokuchuo';
 
 /**
  * 松山市を起点に、近い市町から順に解放する単一チェーン（波紋状）。
@@ -60,6 +63,9 @@ const REGION_CHAIN: { id: string; name: string }[] = [
   { id: REGION_SAIJO, name: '西条市' },
   { id: REGION_NIIHAMA, name: '新居浜市' },
   { id: REGION_UWAJIMA, name: '宇和島市' },
+  { id: REGION_AINAN, name: '愛南町' },
+  { id: REGION_SEIYO, name: '西予市' },
+  { id: REGION_SHIKOKUCHUO, name: '四国中央市' },
 ];
 
 /** Region id の全順序（波紋状アンロック順）。 */
@@ -161,19 +167,91 @@ const SPOT_DESCRIPTION: Record<string, string> = {
     '伊達家ゆかりの現存十二天守の一つ。白壁と御所建築の優雅な姿が美しく、400年の歴史を持つ「上り立ち門」も見どころ。【おすすめ】現存天守と歴史散策。',
 };
 
-export const SPOTS: Spot[] = SPOT_ROWS.map(
-  ([id, name, regionId, lat, lng, radius, coins, exp]): Spot => ({
+// すべてのスポットの訪問判定半径（メートル）。スポット中心から 50m 以内に入ると訪問扱い。
+export const VISIT_RADIUS_METERS = 50;
+
+const TOURISM_SPOTS: Spot[] = SPOT_ROWS.map(
+  ([id, name, regionId, lat, lng, , coins, exp]): Spot => ({
     id,
     name,
     description:
       SPOT_DESCRIPTION[id] ??
       `${name}（${REGION_CHAIN.find((r) => r.id === regionId)?.name ?? ''}）`,
     center: { lat, lng },
-    entryRadiusMeters: radius,
+    // 訪問判定は一律 50m（Req 1.8 の範囲内）。
+    entryRadiusMeters: VISIT_RADIUS_METERS,
     regionId,
     firstVisitReward: { coins, experience: exp, items: [] },
   })
 );
+
+// ---------------------------------------------------------------------------
+// 四国八十八ヶ所 愛媛の札所（第40〜65番）
+// 出典: 四国遍路日本遺産協議会「愛媛遍路マップ」(seichijunrei-shikokuhenro.jp) の
+// 札所名・読み・所在地を参照（内容は要約・言い換え）。座標は所在地に基づく概算。
+// ［番号, id, 寺名, 市町(Region), 緯度, 経度, 読み, 所在地］
+// ---------------------------------------------------------------------------
+
+type HenroRow = [number, string, string, string, number, number, string, string];
+
+const HENRO_ROWS: HenroRow[] = [
+  [40, 'henro-40', '観自在寺', REGION_AINAN, 32.9636, 132.561, 'へいじょうざん かんじざいじ', '南宇和郡愛南町御荘平城'],
+  [41, 'henro-41', '龍光寺', REGION_UWAJIMA, 33.273, 132.636, 'いなりざん りゅうこうじ', '宇和島市三間町戸雁'],
+  [42, 'henro-42', '佛木寺', REGION_UWAJIMA, 33.266, 132.612, 'いっかざん ぶつもくじ', '宇和島市三間町則'],
+  [43, 'henro-43', '明石寺', REGION_SEIYO, 33.364, 132.536, 'げんこうざん めいせきじ', '西予市宇和町明石'],
+  [44, 'henro-44', '大寶寺', REGION_KUMAKOGEN, 33.654, 132.903, 'すごうさん だいほうじ', '上浮穴郡久万高原町菅生'],
+  [45, 'henro-45', '岩屋寺', REGION_KUMAKOGEN, 33.647, 132.833, 'かいがんざん いわやじ', '上浮穴郡久万高原町七鳥'],
+  [46, 'henro-46', '浄瑠璃寺', REGION_MATSUYAMA, 33.774, 132.812, 'いおうざん じょうるりじ', '松山市浄瑠璃町'],
+  [47, 'henro-47', '八坂寺', REGION_MATSUYAMA, 33.776, 132.806, 'くまのざん やさかじ', '松山市浄瑠璃町八坂'],
+  [48, 'henro-48', '西林寺', REGION_MATSUYAMA, 33.792, 132.804, 'せいりゅうざん さいりんじ', '松山市高井町'],
+  [49, 'henro-49', '浄土寺', REGION_MATSUYAMA, 33.816, 132.812, 'さいりんざん じょうどじ', '松山市鷹子町'],
+  [50, 'henro-50', '繁多寺', REGION_MATSUYAMA, 33.823, 132.806, 'ひがしやま はんたじ', '松山市畑寺町'],
+  [51, 'henro-51', '石手寺', REGION_MATSUYAMA, 33.8527, 132.7986, 'くまのざん いしてじ', '松山市石手'],
+  [52, 'henro-52', '太山寺', REGION_MATSUYAMA, 33.883, 132.73, 'りゅううんざん たいさんじ', '松山市太山寺町'],
+  [53, 'henro-53', '圓明寺', REGION_MATSUYAMA, 33.89, 132.733, 'すがさん えんみょうじ', '松山市和気町'],
+  [54, 'henro-54', '延命寺', REGION_IMABARI, 34.043, 132.956, 'ちかみざん えんめいじ', '今治市阿方甲'],
+  [55, 'henro-55', '南光坊', REGION_IMABARI, 34.064, 132.996, 'べっくざん なんこうぼう', '今治市別宮町'],
+  [56, 'henro-56', '泰山寺', REGION_IMABARI, 34.049, 132.981, 'きんりんざん たいさんじ', '今治市小泉'],
+  [57, 'henro-57', '栄福寺', REGION_IMABARI, 34.024, 132.962, 'ふとうざん えいふくじ', '今治市玉川町八幡甲'],
+  [58, 'henro-58', '仙遊寺', REGION_IMABARI, 34.015, 132.952, 'されいざん せんゆうじ', '今治市玉川町別所甲'],
+  [59, 'henro-59', '国分寺', REGION_IMABARI, 34.043, 133.008, 'こんこうざん こくぶんじ', '今治市国分'],
+  [60, 'henro-60', '横峰寺', REGION_SAIJO, 33.833, 133.112, 'いしづちざん よこみねじ', '西条市小松町石鎚'],
+  [61, 'henro-61', '香園寺', REGION_SAIJO, 33.823, 133.111, 'せんだんざん こうおんじ', '西条市小松町南川甲'],
+  [62, 'henro-62', '宝寿寺', REGION_SAIJO, 33.821, 133.123, 'てんようざん ほうじゅじ', '西条市小松町新屋敷甲'],
+  [63, 'henro-63', '吉祥寺', REGION_SAIJO, 33.819, 133.145, 'みっきょうざん きちじょうじ', '西条市氷見乙'],
+  [64, 'henro-64', '前神寺', REGION_SAIJO, 33.817, 133.183, 'いしづちざん まえがみじ', '西条市洲之内甲'],
+  [65, 'henro-65', '三角寺', REGION_SHIKOKUCHUO, 33.976, 133.531, 'ゆれいざん さんかくじ', '四国中央市金田町三角寺甲'],
+];
+
+// 札所参拝の報酬。経験値は「100m 歩行(=10exp)」の約25倍（20〜30倍の範囲）に設定。
+// アイテムは参拝の記念品（trophy-<spotId>、アクセサリ）を確実に獲得できる。
+const HENRO_VISIT_EXP = 250; // 100m 歩行(10exp) の 25 倍
+const HENRO_VISIT_COINS = 60;
+
+const HENRO_SPOTS: Spot[] = HENRO_ROWS.map(
+  ([num, id, name, regionId, lat, lng, yomi, address]): Spot => ({
+    id,
+    name: `第${num}番 ${name}`,
+    description: `四国八十八ヶ所 第${num}番札所「${name}」（${yomi}）。所在地：${address}。弘法大師ゆかりの霊場で、四国遍路（お遍路）の巡礼地。【おすすめ】静かな境内の参拝と札所めぐり・御朱印。参拝すると経験値とアイテムが手に入る。`,
+    center: { lat, lng },
+    entryRadiusMeters: VISIT_RADIUS_METERS,
+    regionId,
+    category: 'henro',
+    // 参拝報酬（経験値・コイン）は巡った札所数に応じて段階的に増える（store 側で計算）。
+    // items（記念品）は確実に獲得できる。base の値は store の計算が無い場合のフォールバック。
+    firstVisitReward: {
+      coins: HENRO_VISIT_COINS,
+      experience: HENRO_VISIT_EXP,
+      items: [`trophy-${id}`],
+    },
+  })
+);
+
+// 観光スポットと札所（お遍路）を統合した全スポット。
+export const SPOTS: Spot[] = [...TOURISM_SPOTS, ...HENRO_SPOTS];
+
+/** 札所（お遍路）スポットの id 集合（コレクション等で利用）。 */
+export const HENRO_SPOT_IDS: string[] = HENRO_SPOTS.map((s) => s.id);
 
 /** スポット総数（スタンプ集計の分母）。 */
 export const TOTAL_SPOTS = SPOTS.length;
@@ -265,6 +343,15 @@ const SHOP_ROWS: ShopRow[] = [
   ['item-date-saihai', '伊達の采配刀', REGION_UWAJIMA, 'weapon', '伊達家の威光。攻撃が上がる。', { attack: 14 }, 200],
   ['item-jakoten-shield', 'じゃこ天の盾', REGION_UWAJIMA, 'armor', '揚げたての守り。防御とHPが上がる。', { defense: 13, hp: 26 }, 180],
   ['item-togyu-horn', '闘牛の角飾り', REGION_UWAJIMA, 'accessory', '宇和島闘牛の闘志。攻撃と素早さが上がる。', { attack: 5, speed: 6 }, 150],
+  // 愛南町
+  ['item-ainan-pearl', '御荘湾の真珠のお守り', REGION_AINAN, 'accessory', '真珠養殖の海の恵み。HPと素早さが上がる。', { hp: 22, speed: 5 }, 150],
+  ['item-ainan-shiden', '紫電改の翼章', REGION_AINAN, 'weapon', '海中から蘇った戦闘機の意匠。攻撃が上がる。', { attack: 12, speed: 3 }, 170],
+  // 西予市
+  ['item-seiyo-kagura-bell', 'どろん亭の神楽鈴', REGION_SEIYO, 'accessory', '宇和の伝統神楽の鈴。HPが上がる。', { hp: 26, speed: 3 }, 140],
+  ['item-seiyo-karst-stone', '穴神の鍾乳石', REGION_SEIYO, 'armor', '鍾乳洞の守り。防御が上がる。', { defense: 12, hp: 18 }, 160],
+  // 四国中央市
+  ['item-shikokuchuo-paper-charm', '紙のまちの護符', REGION_SHIKOKUCHUO, 'accessory', '製紙の町の護符。素早さとHPが上がる。', { speed: 7, hp: 14 }, 150],
+  ['item-shikokuchuo-brush', '書道の大筆', REGION_SHIKOKUCHUO, 'weapon', '書道パフォーマンスの大筆。攻撃が上がる。', { attack: 13 }, 180],
 ];
 
 for (const [id, name, regionId, slot, desc, effects, price] of SHOP_ROWS) {
@@ -293,6 +380,9 @@ const LIMITED_ROWS: LimitedRow[] = [
   ['limited-ishizuchi-mirror', '石鎚権現の御鏡', REGION_SAIJO, 'accessory', '霊峰の御鏡。全能力を底上げする限定品。', { attack: 8, defense: 8, hp: 30, speed: 8 }],
   ['limited-bessi-hammer', '別子銅龍の大槌', REGION_NIIHAMA, 'weapon', '銅龍の大槌。攻撃が極めて高い限定品。', { attack: 28 }],
   ['limited-date-helm', '伊達龍の兜', REGION_UWAJIMA, 'armor', '伊達龍の兜。防御とHPが大きく上がる限定品。', { defense: 22, hp: 70 }],
+  ['limited-ainan-staff', '観自在の錫杖', REGION_AINAN, 'weapon', '南の霊場の錫杖。攻撃と素早さが上がる限定品。', { attack: 20, speed: 8 }],
+  ['limited-seiyo-mirror', '明石の霊鏡', REGION_SEIYO, 'accessory', '宇和の霊鏡。全能力をやや底上げする限定品。', { attack: 6, defense: 6, hp: 30, speed: 6 }],
+  ['limited-shikokuchuo-vajra', '三角寺の独鈷杵', REGION_SHIKOKUCHUO, 'weapon', '結願前の霊地の法具。攻撃が大きく上がる限定品。', { attack: 24, defense: 6 }],
 ];
 
 for (const [id, name, regionId, slot, desc, effects] of LIMITED_ROWS) {
@@ -314,7 +404,7 @@ for (const spot of SPOTS) {
     id: `trophy-${spot.id}`,
     name: `${spot.name}の記念品`,
     priceCoins: 999_999_999, // ドロップ専用（ショップ非表示）
-    effectDescription: `${spot.name}の中ボスを討伐した証。小さなステータス上昇。`,
+    effectDescription: `${spot.name}を訪れた証の記念品。小さなステータス上昇。`,
     slot: 'accessory',
     statEffects: { hp: 8, speed: 2 },
     isLimited: true,
@@ -339,6 +429,9 @@ const REGION_BOSS_NAME: Record<string, string> = {
   [REGION_SAIJO]: '石鎚の山神',
   [REGION_NIIHAMA]: '別子の銅龍',
   [REGION_UWAJIMA]: '宇和島の闘牛王',
+  [REGION_AINAN]: '御荘湾の海王',
+  [REGION_SEIYO]: '宇和盆地の霧将',
+  [REGION_SHIKOKUCHUO]: '法皇山の結願鬼',
 };
 
 const REGION_LIMITED_BY_REGION: Record<string, string> = Object.fromEntries(
@@ -375,7 +468,8 @@ const regionBosses: Boss[] = REGION_CHAIN.map((r, i): Boss => {
 });
 
 // 中ボス（各スポット紐付け）。確率で記念品をドロップする。
-const midBosses: Boss[] = SPOTS.map((spot): Boss => {
+// 札所（お遍路）には中ボスを設置しない（参拝報酬で経験値・アイテムを得る方式）。
+const midBosses: Boss[] = TOURISM_SPOTS.map((spot): Boss => {
   // スポットの所属市町の tier を強さの目安にする（後半市町の中ボスほど強い）。
   const tier = Math.max(1, UNLOCK_ORDER.indexOf(spot.regionId) + 1);
   return {
@@ -458,6 +552,32 @@ for (const f of FLAGSHIP_SPOT) {
   });
 }
 
+// お遍路（四国遍路 愛媛の札所）専用の称号。
+// regionId はメタ情報で、判定は spotIds（全札所訪問）で行う（複数市町にまたがる）。
+titles.push({
+  id: 'title-henro-ehime-complete',
+  name: '菩提の道場 結願',
+  description: '愛媛の札所（第40〜65番）全26ヶ所を巡拝した証。',
+  condition: {
+    kind: 'allSpotsVisitedInRegion',
+    regionId: 'henro-ehime',
+    spotIds: HENRO_SPOT_IDS,
+  },
+});
+// 難所として知られる札所の到達称号。
+titles.push({
+  id: 'title-henro-iwayaji',
+  name: '山岳霊場の巡礼者',
+  description: '断崖の霊場・第45番 岩屋寺に参拝した証。',
+  condition: { kind: 'allSpotsVisitedInRegion', regionId: REGION_KUMAKOGEN, spotIds: ['henro-45'] },
+});
+titles.push({
+  id: 'title-henro-yokomineji',
+  name: '遍路ころがし踏破',
+  description: '難所として名高い第60番 横峰寺に到達した証。',
+  condition: { kind: 'allSpotsVisitedInRegion', regionId: REGION_SAIJO, spotIds: ['henro-60'] },
+});
+
 export const TITLES: TitleDefinition[] = titles;
 
 // ---------------------------------------------------------------------------
@@ -485,6 +605,12 @@ export const COLLECTIONS: CollectionDefinition[] = [
     name: '全スタンプ',
     kind: 'stamp',
     entryIds: SPOTS.map((s) => s.id),
+  },
+  {
+    id: 'collection-henro',
+    name: '四国遍路 愛媛の札所（40〜65番）',
+    kind: 'stamp',
+    entryIds: HENRO_SPOT_IDS,
   },
   {
     id: 'collection-region-bosses',

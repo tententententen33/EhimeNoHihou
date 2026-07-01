@@ -69,6 +69,13 @@ export interface Spot {
   regionId: string;
   /** 初回訪問報酬（Req 5.3） */
   firstVisitReward: RewardGrant;
+  /**
+   * スポットの種別（任意）。
+   * - 'tourism': 通常の観光スポット（中ボスあり）
+   * - 'henro': 四国遍路の札所（中ボスなし・参拝報酬型・ピン意匠を変える）
+   * 未指定時は 'tourism' 相当として扱う。
+   */
+  category?: 'tourism' | 'henro';
 }
 
 // ---------------------------------------------------------------------------

@@ -35,6 +35,16 @@ function unlockedIcon(label: string | undefined, selected: boolean): L.DivIcon {
   });
 }
 
+/** 札所（お遍路）用の divIcon（控えめな星）。通常ピンより目立たせない。 */
+function henroIcon(selected: boolean): L.DivIcon {
+  return L.divIcon({
+    className: 'leaflet-spot-icon',
+    html: `<div class="leaflet-spot leaflet-spot--henro${selected ? ' leaflet-spot--selected' : ''}"><span class="leaflet-spot__pin leaflet-spot__pin--henro" aria-hidden="true">★</span></div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+}
+
 /** ロックスポット用の divIcon（名前・報酬を伏せ、鍵のみ表示）。 */
 function lockedIcon(selected: boolean): L.DivIcon {
   return L.divIcon({
@@ -148,11 +158,13 @@ export function LeafletMapSurface({
     for (const m of markers) {
       const icon = m.locked
         ? lockedIcon(m.selected)
-        : unlockedIcon(m.label, m.selected);
+        : m.henro
+          ? henroIcon(m.selected)
+          : unlockedIcon(m.label, m.selected);
       const marker = L.marker([m.lat, m.lng], {
         icon,
         // アクセシビリティ用の代替テキスト（ロックは名称を出さない）。
-        alt: m.locked ? 'ロックされたスポット' : (m.label ?? '解放済みスポット'),
+        alt: m.locked ? 'ロックされたスポット' : m.henro ? '札所（お遍路）' : (m.label ?? '解放済みスポット'),
         keyboard: true,
       });
       marker.on('click', () => onSelectRef.current(m.spotId));
