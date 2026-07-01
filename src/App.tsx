@@ -24,6 +24,7 @@ import { QuestsView } from './ui/views/QuestsView';
 import { CollectionsView } from './ui/views/CollectionsView';
 import { FriendsView } from './ui/views/FriendsView';
 import { HomeView } from './ui/views/HomeView';
+import { OnboardingView } from './ui/views/OnboardingView';
 
 import { LocationService } from './services/locationService';
 import {
@@ -104,6 +105,14 @@ function isNotFound(error: unknown): boolean {
 }
 
 export function App() {
+  // オンボーディング完了状態（localStorage に保存）。
+  const [onboarded, setOnboarded] = useState<boolean>(() => {
+    return localStorage.getItem('ehime-rpg-onboarded') === 'true';
+  });
+  const [playerName, setPlayerName] = useState<string>(() => {
+    return localStorage.getItem('ehime-rpg-player-name') ?? '冒険者';
+  });
+
   // 初期データ取得状態（Req 12.7: loading / Req 12.8: error / ready）。
   const [loadStatus, setLoadStatus] = useState<LoadStatus>('loading');
   // 現在の確定済みプレイヤー状態（ストアの getState を反映）。
@@ -505,6 +514,7 @@ export function App() {
           spots={SPOTS}
           activeQuests={player.quests.filter((q) => !q.complete)}
           todayWalkMeters={player.pendingWalkMeters}
+          playerName={playerName}
         />
       ),
       map: mapNode,
@@ -570,6 +580,17 @@ export function App() {
 
   return (
     <>
+      {/* オンボーディング（初回起動時） */}
+      {!onboarded && (
+        <OnboardingView
+          onComplete={(completedName) => {
+            setPlayerName(completedName);
+            localStorage.setItem('ehime-rpg-onboarded', 'true');
+            localStorage.setItem('ehime-rpg-player-name', completedName);
+            setOnboarded(true);
+          }}
+        />
+      )}
       {toast !== null && (
         <div className="app-toast" role="status" aria-live="polite">
           {toast}

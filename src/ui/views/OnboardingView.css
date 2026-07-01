@@ -1,0 +1,327 @@
+/* ========================================================================
+   OnboardingView - RPG初回起動画面
+   ======================================================================== */
+
+.onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #065f46 0%, #047857 40%, #059669 100%);
+  color: #fff;
+  padding: 2rem 1.5rem;
+  overflow-y: auto;
+}
+
+/* === ページ共通 === */
+.onboarding__page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  animation: onboarding-fade-in 0.5s ease-out;
+}
+
+@keyframes onboarding-fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === エンブレム（大アイコン） === */
+.onboarding__emblem {
+  font-size: 4rem;
+  line-height: 1;
+  animation: onboarding-bounce 0.8s ease-out;
+}
+
+@keyframes onboarding-bounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* === タイトル === */
+.onboarding__title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.onboarding__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.1em;
+}
+
+/* === ストーリーテキスト === */
+.onboarding__story {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+}
+
+.onboarding__story p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+/* === 見出し・説明 === */
+.onboarding__heading {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.onboarding__desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+/* === 名前入力 === */
+.onboarding__input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.onboarding__input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  padding-right: 3.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.onboarding__input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.onboarding__input:focus {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.onboarding__input-count {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+/* === アクションボタン === */
+.onboarding__actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.onboarding__btn {
+  min-height: 48px;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.onboarding__btn--primary {
+  flex: 1 1 auto;
+  background: #fff;
+  color: #065f46;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.onboarding__btn--primary:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.onboarding__btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.onboarding__btn--start {
+  width: 100%;
+  background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+  color: #fff;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+  animation: onboarding-glow 2s ease-in-out infinite;
+}
+
+@keyframes onboarding-glow {
+  0%, 100% { box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 4px 24px rgba(245, 158, 11, 0.7), 0 0 40px rgba(245, 158, 11, 0.2); }
+}
+
+.onboarding__btn--start:active {
+  transform: scale(0.97);
+}
+
+.onboarding__btn--ghost {
+  flex: 0 0 auto;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.onboarding__btn--ghost:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* === キャラクター表示 === */
+.onboarding__character {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 100%;
+}
+
+.onboarding__character-avatar {
+  font-size: 4rem;
+  line-height: 1;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.onboarding__character-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.onboarding__character-name {
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.onboarding__character-level {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.75;
+  padding: 0.2rem 0.7rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+}
+
+/* === 準備完了 === */
+.onboarding__ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* === ヒント === */
+.onboarding__tips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.onboarding__tip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.onboarding__tip-icon {
+  font-size: 1.2rem;
+  flex: 0 0 auto;
+}
+
+.onboarding__tip-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* === ステップインジケーター === */
+.onboarding__dots {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.onboarding__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.3);
+  transition: all var(--transition-normal);
+}
+
+.onboarding__dot--active {
+  width: 24px;
+  background: #fff;
+}
+
+/* === アニメーション抑制 === */
+@media (prefers-reduced-motion: reduce) {
+  .onboarding__emblem {
+    animation: none;
+  }
+  .onboarding__btn--start {
+    animation: none;
+  }
+  .onboarding__page {
+    animation: none;
+  }
+}

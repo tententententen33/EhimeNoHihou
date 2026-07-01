@@ -16,6 +16,8 @@ export interface HomeViewProps {
   activeQuests: QuestProgress[];
   /** 今日の歩行距離（メートル） */
   todayWalkMeters: number;
+  /** プレイヤー名 */
+  playerName?: string;
 }
 
 /** コイン表示のフォーマット */
@@ -29,6 +31,7 @@ export function HomeView({
   spots,
   activeQuests,
   todayWalkMeters,
+  playerName = '冒険者',
 }: HomeViewProps) {
   const progress = getProgressDisplay(player);
   const level = levelForExperience(player.experience);
@@ -66,7 +69,7 @@ export function HomeView({
           <span className="home-character-card__level-badge">Lv.{level}</span>
         </div>
         <div className="home-character-card__info">
-          <h2 className="home-character-card__name">冒険者</h2>
+          <h2 className="home-character-card__name">{playerName}</h2>
           {player.titleIds.length > 0 && (
             <span className="home-character-card__title">
               👑 称号あり
